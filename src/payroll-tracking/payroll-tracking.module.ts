@@ -7,6 +7,10 @@ import { claims, claimsSchema } from './models/claims.schema';
 import { disputes, disputesSchema } from './models/disputes.schema';
 import { PayrollConfigurationModule } from '../payroll-configuration/payroll-configuration.module';
 import { PayrollExecutionModule } from '../payroll-execution/payroll-execution.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+
+
 
 @Module({
   
@@ -18,7 +22,8 @@ import { PayrollExecutionModule } from '../payroll-execution/payroll-execution.m
       { name: disputes.name, schema: disputesSchema },
     ])],
   controllers: [PayrollTrackingController],
-  providers: [PayrollTrackingService],
+  providers: [PayrollTrackingService,JwtAuthGuard,RolesGuard],
   exports:[PayrollTrackingService]
 })
 export class PayrollTrackingModule { }
+
