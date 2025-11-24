@@ -1,18 +1,23 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+
 export class CreateClaimDto {
   @IsNotEmpty()
   @IsString()
   description: string;
 
-    @IsNotEmpty()
-    @IsString()
-    employeeId: string;
+  @IsNotEmpty()
+  @IsString()
+  claimType: string;   // e.g., medical, travel, etc.
 
-    @IsNotEmpty()
-    @IsString()
-    payslipId: string;
+  @IsNotEmpty()
+  @IsString()
+  employeeId: string;  // will be converted to ObjectId in schema
 
-    @IsOptional()
-    @IsString()
-    evidence?: string;
+  @IsNotEmpty()
+  @IsNumber()
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  evidence?: string;   // optional text or URL
 }

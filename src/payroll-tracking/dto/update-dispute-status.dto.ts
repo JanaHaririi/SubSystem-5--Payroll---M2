@@ -1,11 +1,15 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
-export class CreateClaimDto {
+export class UpdateDisputeStatusDto {
   @IsNotEmpty()
   @IsString()
-  status: string;
+  status: string;   // UNDER_REVIEW, APPROVED, REJECTED
 
   @IsOptional()
   @IsString()
-  remarks?: string;
+  rejectionReason?: string;
+
+  @IsOptional()
+  @IsString()
+  resolutionComment?: string;
 }

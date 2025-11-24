@@ -1,15 +1,19 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
-export class CreateClaimDto {
+export class CreateDisputeDto {
   @IsNotEmpty()
   @IsString()
   description: string;
 
-    @IsNotEmpty()
-    @IsString()
-    payslipId: string;
+  @IsNotEmpty()
+  @IsString()
+  employeeId: string;  // will map to ObjectId
 
-    @IsOptional()
-    @IsString()
-    evidenceUrl?: string;
+  @IsNotEmpty()
+  @IsString()
+  payslipId: string;   // ObjectId as string
+
+  @IsOptional()
+  @IsString()
+  evidence?: string;   // matches schema exactly
 }
