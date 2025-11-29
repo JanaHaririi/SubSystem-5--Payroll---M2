@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-// Schemas
-import { Claim } from './models/claims.schema';
-import { Dispute } from './models/disputes.schema';
-import { Refund } from './models/refunds.schema';
+// Correct schema imports (lowercase class names)
+import { claims, claimsDocument } from './models/claims.schema';
+import { disputes, disputesDocument } from './models/disputes.schema';
+import { refunds, refundsDocument } from './models/refunds.schema';
 
 // DTOs
 import { CreateClaimDto } from './dto/create-claim.dto';
@@ -17,13 +17,18 @@ import { CreateRefundDto, UpdateRefundStatusDto } from './dto/create-refund.dto'
 @Injectable()
 export class PayrollTrackingService {
   constructor(
-    @InjectModel(Claim.name) private readonly claimModel: Model<Claim>,
-    @InjectModel(Dispute.name) private readonly disputeModel: Model<Dispute>,
-    @InjectModel(Refund.name) private readonly refundModel: Model<Refund>,
+    @InjectModel(claims.name)
+    private readonly claimModel: Model<claimsDocument>,
+
+    @InjectModel(disputes.name)
+    private readonly disputeModel: Model<disputesDocument>,
+
+    @InjectModel(refunds.name)
+    private readonly refundModel: Model<refundsDocument>,
   ) {}
 
   // ======================================================
-  // CLAIMS (Employee + Payroll Specialist)
+  // CLAIMS
   // ======================================================
 
   async getClaimsForEmployee(employeeId: string) {
@@ -31,26 +36,28 @@ export class PayrollTrackingService {
   }
 
   async createClaim(dto: CreateClaimDto) {
-    const created = new this.claimModel({
+    // Auto-generate claimId => CLAIM-0001, CLAIM-0002, ...
+    const count = await this.claimModel.countDocuments();
+    const claimId = `CLAIM-${String(count + 1).padStart(4, '0')}`;
+
+    return this.claimModel.create({
       ...dto,
-      status: 'pending', // Default status
-      createdAt: new Date(),
+      claimId,
     });
-    return created.save();
   }
 
   async getPendingClaims() {
-    return this.claimModel.find({ status: 'pending' }).exec();
+    return this.claimModel.find({ status: 'UNDER_REVIEW' }).exec();
   }
 
   async updateClaimStatus(claimId: string, dto: UpdateClaimStatusDto) {
     return this.claimModel
-      .findByIdAndUpdate(
-        claimId,
+      .findOneAndUpdate(
+        { claimId },
         {
           status: dto.status,
-          resolutionNotes: dto.resolutionNotes,
-          updatedAt: new Date(),
+          rejectionReason: dto.rejectionReason,
+          resolutionComment: dto.resolutionComment,
         },
         { new: true },
       )
@@ -58,34 +65,36 @@ export class PayrollTrackingService {
   }
 
   // ======================================================
-  // DISPUTES (Employee + Payroll Specialist)
+  // DISPUTES
   // ======================================================
 
   async getDisputesForEmployee(employeeId: string) {
     return this.disputeModel.find({ employeeId }).exec();
   }
 
-  async createDispute(dto: CreateDisputeDto) {
-    const created = new this.disputeModel({
-      ...dto,
-      status: 'pending',
-      createdAt: new Date(),
-    });
-    return created.save();
-  }
+ async createDispute(dto: CreateDisputeDto) {
+  // Auto-generate disputeId => DISP-0001, DISP-0002, ...
+  const count = await this.disputeModel.countDocuments();
+  const disputeId = `DISP-${String(count + 1).padStart(4, '0')}`;
+
+  return this.disputeModel.create({
+    ...dto,
+    disputeId,
+  });
+}
 
   async getPendingDisputes() {
-    return this.disputeModel.find({ status: 'pending' }).exec();
+    return this.disputeModel.find({ status: 'UNDER_REVIEW' }).exec();
   }
 
   async updateDisputeStatus(disputeId: string, dto: UpdateDisputeStatusDto) {
     return this.disputeModel
-      .findByIdAndUpdate(
-        disputeId,
+      .findOneAndUpdate(
+        { disputeId },
         {
           status: dto.status,
-          resolutionNotes: dto.resolutionNotes,
-          updatedAt: new Date(),
+          rejectionReason: dto.rejectionReason,
+          resolutionComment: dto.resolutionComment,
         },
         { new: true },
       )
@@ -93,16 +102,11 @@ export class PayrollTrackingService {
   }
 
   // ======================================================
-  // REFUNDS (Finance)
+  // REFUNDS
   // ======================================================
 
   async createRefund(dto: CreateRefundDto) {
-    const created = new this.refundModel({
-      ...dto,
-      status: 'pending',
-      createdAt: new Date(),
-    });
-    return created.save();
+    return this.refundModel.create(dto);
   }
 
   async updateRefundStatus(refundId: string, dto: UpdateRefundStatusDto) {
@@ -113,7 +117,6 @@ export class PayrollTrackingService {
           status: dto.status,
           financeStaffId: dto.financeStaffId,
           paidInPayrollRunId: dto.paidInPayrollRunId,
-          updatedAt: new Date(),
         },
         { new: true },
       )
