@@ -12,15 +12,19 @@ export type allowanceDocument = HydratedDocument<allowance>
 export class allowance {
     @Prop({ required: true, unique: true })
     name: string; // allowance name like:  Housing Allowance, Transport Allowance
+    
     @Prop({ required: true, min: 0 })
     amount: number;
-   @Prop({ required: true, type: String, enum: ConfigStatus,default:ConfigStatus.DRAFT })
+   
+    @Prop({ required: true, type: String, enum: ConfigStatus,default:ConfigStatus.DRAFT })
     status: ConfigStatus;// draft, approved, rejected
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     createdBy?: mongoose.Types.ObjectId;
+    
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     approvedBy?: mongoose.Types.ObjectId;
+    
     @Prop({})
     approvedAt?: Date
 

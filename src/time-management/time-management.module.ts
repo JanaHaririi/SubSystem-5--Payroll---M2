@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TimeManagementController } from './time-management.controller';
 import { TimeManagementService } from './time-management.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -13,6 +13,20 @@ import { ShiftSchema, Shift } from './models/shift.schema';
 import { ShiftAssignmentSchema, ShiftAssignment } from './models/shift-assignment.schema';
 import { LatenessRule, latenessRuleSchema } from './models/lateness-rule.schema';
 import { HolidaySchema, Holiday } from './models/holiday.schema';
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+import { OrganizationStructureModule } from '../organization-structure/organization-structure.module';
+import { NotificationLogService } from './services/notification-log.service';
+import { ShiftAssignmentService } from './services/shift-assignment.service';
+import { EmployeeProfile, EmployeeProfileSchema } from '../employee-profile/models/employee-profile.schema';
+import { Department, DepartmentSchema } from '../organization-structure/models/department.schema';
+import { Position, PositionSchema } from '../organization-structure/models/position.schema';
+import { ScheduleRuleService } from './services/schedule-rule.service';
+import { AttendanceRecordService } from './services/attendance-record.service';
+import { AttendanceCorrectionRequestService } from './services/attendance-correction-request.service';  
+import { HolidayService } from './services/holiday.service';
+import { ShiftTypeService } from './services/shift-type.service';
+import { ShiftService } from './services/shift.service';
+
 
 
 @Module({
@@ -27,9 +41,15 @@ import { HolidaySchema, Holiday } from './models/holiday.schema';
     { name: Shift.name, schema: ShiftSchema },
     { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
     { name: LatenessRule.name, schema: latenessRuleSchema },
-    { name: Holiday.name, schema: HolidaySchema },
-  ])],
+    { name: Holiday.name, schema: HolidaySchema }
+    
+  ]),
+  forwardRef(()=>EmployeeProfileModule),
+  OrganizationStructureModule
+
+  ],
   controllers: [TimeManagementController],
-  providers: [TimeManagementService]
+  providers: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService, ShiftTypeService, ShiftService, AttendanceCorrectionRequestService, HolidayService],
+  exports: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService, ShiftTypeService, ShiftService, AttendanceCorrectionRequestService, HolidayService]
 })
 export class TimeManagementModule {}

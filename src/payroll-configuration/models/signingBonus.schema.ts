@@ -10,15 +10,19 @@ export type signingBonusDocument = HydratedDocument<signingBonus>
 export class signingBonus {
     @Prop({ required: true, unique: true })
     positionName: string; // only onboarding bonus based on position like:  Junior TA, Mid TA, Senior TA
+    
     @Prop({ required: true, min: 0 })
     amount: number;
+    
     @Prop({ required: true, type: String, enum: ConfigStatus, default: ConfigStatus.DRAFT })
     status: ConfigStatus;// draft, approved, rejected
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     createdBy?: mongoose.Types.ObjectId;
+    
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     approvedBy?: mongoose.Types.ObjectId;
+    
     @Prop({})
     approvedAt?: Date
 

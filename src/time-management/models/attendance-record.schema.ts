@@ -17,7 +17,7 @@ export class AttendanceRecord{
 
     @Prop({default: []})
     punches: Punch[];
-
+    
     @Prop({ default: 0 }) // to be computed after creating an instance
     totalWorkMinutes: number;
 

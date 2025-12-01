@@ -10,17 +10,22 @@ export type terminationAndResignationBenefitsDocument = HydratedDocument<termina
 export class terminationAndResignationBenefits {
     @Prop({ required: true, unique: true })
     name: string; // termination/resignation name like:  End of Service Gratuity.
+    
     @Prop({ required: true, min: 0 })
     amount: number;
+    
     @Prop()
     terms?: string;
+    
     @Prop({ required: true, type: String, enum: ConfigStatus,default:ConfigStatus.DRAFT })
     status: ConfigStatus;// draft, approved, rejected
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     createdBy?: mongoose.Types.ObjectId;
+    
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     approvedBy?: mongoose.Types.ObjectId;
+    
     @Prop({})
     approvedAt?: Date
 

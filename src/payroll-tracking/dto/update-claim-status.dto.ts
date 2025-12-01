@@ -1,11 +1,15 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
-export class CreateClaimDto {
+export class UpdateClaimStatusDto {
   @IsNotEmpty()
   @IsString()
-  status: string;  
+  status: string;
 
-    @IsOptional()
-    @IsString()
-    remarks?: string;
+  @IsOptional()
+  @IsString()
+  remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  resolutionComment?:string
 }

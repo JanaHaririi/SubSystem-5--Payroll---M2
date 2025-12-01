@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 // Schemas
-import { Claim } from './models/claims.schema';
-import { Dispute } from './models/disputes.schema';
-import { Refund } from './models/refunds.schema';
+import { claims } from './models/claims.schema';
+import { disputes } from './models/disputes.schema';
+import { refunds } from './models/refunds.schema';
 
 // DTOs
 import { CreateClaimDto } from './dto/create-claim.dto';
@@ -17,9 +17,9 @@ import { CreateRefundDto, UpdateRefundStatusDto } from './dto/create-refund.dto'
 @Injectable()
 export class PayrollTrackingService {
   constructor(
-    @InjectModel(Claim.name) private readonly claimModel: Model<Claim>,
-    @InjectModel(Dispute.name) private readonly disputeModel: Model<Dispute>,
-    @InjectModel(Refund.name) private readonly refundModel: Model<Refund>,
+    @InjectModel(claims.name) private readonly claimModel: Model<claims>,
+    @InjectModel(disputes.name) private readonly disputeModel: Model<disputes>,
+    @InjectModel(refunds.name) private readonly refundModel: Model<refunds>,
   ) {}
 
   // ======================================================
@@ -49,7 +49,7 @@ export class PayrollTrackingService {
         claimId,
         {
           status: dto.status,
-          resolutionNotes: dto.resolutionNotes,
+          resolutionNotes: dto.resolutionComment,
           updatedAt: new Date(),
         },
         { new: true },
@@ -84,7 +84,7 @@ export class PayrollTrackingService {
         disputeId,
         {
           status: dto.status,
-          resolutionNotes: dto.resolutionNotes,
+          resolutionNotes: dto.resolutionComment,
           updatedAt: new Date(),
         },
         { new: true },

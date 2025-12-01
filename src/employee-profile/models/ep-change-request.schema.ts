@@ -17,12 +17,30 @@ export class EmployeeProfileChangeRequest {
   @Prop({ type: String })
   reason?: string;
 
+  @Prop({ type: Object })
+  requestedChanges?: Record<string, any>;
+
   @Prop({
     type: String,
     enum: Object.values(ProfileChangeStatus),
     default: ProfileChangeStatus.PENDING,
   })
   status: ProfileChangeStatus;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  requestedBy?: Types.ObjectId;
+
+  @Prop({ type: Date, default: () => new Date() })
+  requestDate: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  reviewedBy?: Types.ObjectId;
+
+  @Prop({ type: Date })
+  reviewDate?: Date;
+
+  @Prop({ type: String })
+  reviewComments?: string;
 
   @Prop({ type: Date, default: () => new Date() })
   submittedAt: Date;
