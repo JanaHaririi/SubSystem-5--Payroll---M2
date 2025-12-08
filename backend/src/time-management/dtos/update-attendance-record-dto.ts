@@ -1,0 +1,31 @@
+// dtos/update-attendance-record.dto.ts
+import { IsMongoId, IsOptional, IsArray, IsBoolean, IsNumber } from 'class-validator';
+import { Types } from 'mongoose';
+import { Punch } from '../models/attendance-record.schema';
+
+export class UpdateAttendanceRecordDto {
+  @IsOptional()
+  @IsMongoId()
+  employeeId?: Types.ObjectId;
+
+  @IsOptional()
+  @IsArray()
+  punches?: Punch[];
+
+  @IsOptional()
+  @IsNumber()
+  totalWorkMinutes?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  hasMissedPunch?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  exceptionIds?: Types.ObjectId[];
+
+  @IsOptional()
+  @IsBoolean()
+  finalisedForPayroll?: boolean;
+}
+
