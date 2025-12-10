@@ -1,18 +1,19 @@
-import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateClaimDto {
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   employeeId: string;
 
-  @IsNotEmpty()
   @IsString()
-  claimType: string;
-
   @IsNotEmpty()
-  @IsString()
   description: string;
 
+  @IsString()
+  @IsNotEmpty()
+  claimType: string;
+
   @IsNumber()
+  @IsNotEmpty()
   amount: number;
 }

@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function HomePage() {
@@ -77,46 +78,42 @@ export default function HomePage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Employee Profile */}
             <DashboardCard
               title="Employee Profile"
               description="View and manage employee information"
-              icon="👤"
+              icon="EP"
             />
-
-            {/* Recruitment */}
             <DashboardCard
               title="Recruitment"
               description="Manage job postings and applications"
-              icon="🎯"
+              icon="REC"
             />
-
-            {/* Time Management */}
             <DashboardCard
               title="Time Management"
               description="Track attendance and work hours"
-              icon="⏰"
+              icon="TIME"
             />
-
-            {/* Leave Management */}
             <DashboardCard
               title="Leave Management"
               description="Handle leave requests and balances"
-              icon="🏖️"
+              icon="LV"
             />
-
-            {/* Payroll */}
             <DashboardCard
               title="Payroll"
               description="Process salaries and payroll"
-              icon="💰"
+              icon="$$"
+              href="/payroll-tracking"
             />
-
-            {/* Performance */}
+                        <DashboardCard
+              title="Payroll Tracking"
+              description="Manage claims, disputes, and refunds"
+              icon="PT"
+              href="/payroll-tracking"
+            />
             <DashboardCard
               title="Performance"
               description="Track goals and reviews"
-              icon="📈"
+              icon="PRF"
             />
           </div>
 
@@ -204,7 +201,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            ✕
+            âœ•
           </button>
         </div>
 
@@ -358,8 +355,18 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string }) {
-  return (
+function DashboardCard({
+  title,
+  description,
+  icon,
+  href,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+  href?: string;
+}) {
+  const content = (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -370,4 +377,16 @@ function DashboardCard({ title, description, icon }: { title: string; descriptio
       </p>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }
+
+

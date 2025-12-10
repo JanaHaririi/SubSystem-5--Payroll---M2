@@ -1,28 +1,34 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
   Patch,
-  Body,
+  Post,
   Param,
   UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 
 import { PayrollTrackingService } from './payroll-tracking.service';
 
 // DTOs
-import { CreateRefundDto, UpdateRefundStatusDto } from './dto/create-refund.dto';
+import { CreateRefundDto } from './dto/create-refund.dto';
+import { UpdateRefundStatusDto } from './dto/update-refund-status.dto';
+
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimStatusDto } from './dto/update-claim-status.dto';
+
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeStatusDto } from './dto/update-dispute-status.dto';
 
-// GLOBAL AUTH GUARDS (from /src/auth)
+// AUTH GUARDS
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-// GLOBAL ROLES ENUM
+// ROLES ENUM
 import { SystemRole } from '../employee-profile/enums/employee-profile.enums';
 
 @Controller('payroll-tracking')
@@ -30,37 +36,75 @@ import { SystemRole } from '../employee-profile/enums/employee-profile.enums';
 export class PayrollTrackingController {
   constructor(private readonly payrollTrackingService: PayrollTrackingService) {}
 
-  // -----------------------------------------------------
-  // EMPLOYEE SELF-SERVICE
-  // -----------------------------------------------------
+  /* ============================================================
+     EMPLOYEE – SELF SERVICE
+  ============================================================ */
 
+  // EMPLOYEE: list own claims
   @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
   @Get('claims/me/:employeeId')
   getMyClaims(@Param('employeeId') employeeId: string) {
     return this.payrollTrackingService.getClaimsForEmployee(employeeId);
   }
 
+  // EMPLOYEE: get claim by id (owned by employee)
+  @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
+  @Get('claims/:id')
+  getMyClaimById(
+    @Param('id') claimId: string,
+    @Req() req: Request,
+  ) {
+    const currentUser: any = req['user'];
+    if (!currentUser?.employeeId) {
+      throw new ForbiddenException('Employee context missing');
+    }
+    return this.payrollTrackingService.getClaimForEmployeeById(
+      claimId,
+      currentUser?.employeeId,
+    );
+  }
+
+  // EMPLOYEE: create claim
   @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
   @Post('claims')
   createClaim(@Body() dto: CreateClaimDto) {
     return this.payrollTrackingService.createClaim(dto);
   }
 
+  // EMPLOYEE: list own disputes
   @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
   @Get('disputes/me/:employeeId')
   getMyDisputes(@Param('employeeId') employeeId: string) {
     return this.payrollTrackingService.getDisputesForEmployee(employeeId);
   }
 
+  // EMPLOYEE: get dispute by id (owned by employee)
+  @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
+  @Get('disputes/:id')
+  getMyDisputeById(
+    @Param('id') disputeId: string,
+    @Req() req: Request,
+  ) {
+    const currentUser: any = req['user'];
+    if (!currentUser?.employeeId) {
+      throw new ForbiddenException('Employee context missing');
+    }
+    return this.payrollTrackingService.getDisputeForEmployeeById(
+      disputeId,
+      currentUser?.employeeId,
+    );
+  }
+
+  // EMPLOYEE: create dispute
   @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
   @Post('disputes')
   createDispute(@Body() dto: CreateDisputeDto) {
     return this.payrollTrackingService.createDispute(dto);
   }
 
-  // -----------------------------------------------------
-  // PAYROLL SPECIALIST ENDPOINTS
-  // -----------------------------------------------------
+  /* ============================================================
+     PAYROLL SPECIALIST – CLAIMS & DISPUTES REVIEW
+  ============================================================ */
 
   @Roles(SystemRole.PAYROLL_SPECIALIST)
   @Get('claims/pending')
@@ -110,9 +154,9 @@ export class PayrollTrackingController {
     return this.payrollTrackingService.updateDisputeStatus(disputeId, dto);
   }
 
-  // -----------------------------------------------------
-  // FINANCE (REFUNDS)
-  // -----------------------------------------------------
+  /* ============================================================
+     FINANCE – REFUNDS
+  ============================================================ */
 
   @Roles(SystemRole.FINANCE_STAFF)
   @Post('refunds')
@@ -133,5 +177,11 @@ export class PayrollTrackingController {
   @Get('refunds')
   listRefunds() {
     return this.payrollTrackingService.getRefunds();
+  }
+
+  @Roles(SystemRole.FINANCE_STAFF)
+  @Get('refunds/:id')
+  getRefundById(@Param('id') refundId: string) {
+    return this.payrollTrackingService.getRefundById(refundId);
   }
 }

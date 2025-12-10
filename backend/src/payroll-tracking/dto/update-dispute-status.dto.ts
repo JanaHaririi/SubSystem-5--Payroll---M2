@@ -1,15 +1,12 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateDisputeStatusDto {
+  @IsString()
   @IsNotEmpty()
-  @IsString()
-  status: string;
+  status: string;   // e.g. APPROVED | REJECTED | UNDER_REVIEW
 
-  @IsOptional()
-  @IsString()
-  remarks?: string;
 
   @IsString()
   @IsOptional()
-  resolutionComment?:string
+  resolutionComment?: string;
 }

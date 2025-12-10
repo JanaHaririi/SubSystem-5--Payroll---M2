@@ -14,7 +14,8 @@ import { UpdateClaimStatusDto } from './dto/update-claim-status.dto';
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeStatusDto } from './dto/update-dispute-status.dto';
 
-import { CreateRefundDto, UpdateRefundStatusDto } from './dto/create-refund.dto';
+import { CreateRefundDto } from './dto/create-refund.dto';
+import { UpdateRefundStatusDto } from './dto/update-refund-status.dto';
 
 // Enums
 import {
@@ -31,9 +32,9 @@ export class PayrollTrackingService {
     @InjectModel(refunds.name) private readonly refundModel: Model<refunds>,
   ) {}
 
-  // ======================================================
-  // CLAIMS
-  // ======================================================
+  /* ============================================================
+     CLAIMS
+  ============================================================ */
 
   // Generate human-readable claimId like CLAIM-0001
   async generateClaimId(): Promise<string> {
@@ -42,16 +43,22 @@ export class PayrollTrackingService {
     return `CLAIM-${next}`;
   }
 
+  /** EMPLOYEE – get own claims by employeeId (ObjectId) */
   async getClaimsForEmployee(employeeId: string) {
-    // employeeId in DB is ObjectId
     const objectId = new Types.ObjectId(employeeId);
     return this.claimModel.find({ employeeId: objectId }).exec();
   }
 
-  async createClaim(dto: CreateClaimDto) {
-    // If your DTO has employeeId as string, this converts it to ObjectId
-    const objectId = new Types.ObjectId(dto.employeeId);
+  async getClaimForEmployeeById(claimMongoId: string, employeeId: string) {
+    const employeeObjectId = new Types.ObjectId(employeeId);
+    return this.claimModel
+      .findOne({ _id: claimMongoId, employeeId: employeeObjectId })
+      .exec();
+  }
 
+  /** EMPLOYEE – create claim */
+  async createClaim(dto: CreateClaimDto) {
+    const employeeObjectId = new Types.ObjectId(dto.employeeId);
     const claimId = await this.generateClaimId();
 
     const created = new this.claimModel({
@@ -59,26 +66,25 @@ export class PayrollTrackingService {
       description: dto.description,
       claimType: dto.claimType,
       amount: dto.amount,
-      employeeId: objectId,
+      employeeId: employeeObjectId,
       status: ClaimStatus.UNDER_REVIEW,
     });
 
     return created.save();
   }
 
+  /** PAYROLL SPECIALIST – list pending claims */
   async getPendingClaims() {
     return this.claimModel
       .find({ status: ClaimStatus.UNDER_REVIEW })
       .exec();
   }
 
+  /** PAYROLL SPECIALIST – update claim status */
   async updateClaimStatus(
     claimMongoId: string,
     dto: UpdateClaimStatusDto,
   ) {
-    // ONLY use fields that exist on UpdateClaimStatusDto:
-    // - dto.status
-    // - dto.resolutionComment (we assume this exists since no TS error)
     return this.claimModel.findByIdAndUpdate(
       claimMongoId,
       {
@@ -90,40 +96,51 @@ export class PayrollTrackingService {
     );
   }
 
-  // ======================================================
-  // DISPUTES
-  // ======================================================
+  /* ============================================================
+     DISPUTES
+  ============================================================ */
 
+  /** EMPLOYEE – get own disputes */
   async getDisputesForEmployee(employeeId: string) {
     const objectId = new Types.ObjectId(employeeId);
     return this.disputeModel.find({ employeeId: objectId }).exec();
   }
 
+  async getDisputeForEmployeeById(
+    disputeMongoId: string,
+    employeeId: string,
+  ) {
+    const employeeObjectId = new Types.ObjectId(employeeId);
+    return this.disputeModel
+      .findOne({ _id: disputeMongoId, employeeId: employeeObjectId })
+      .exec();
+  }
+
+  /** EMPLOYEE – create dispute */
   async createDispute(dto: CreateDisputeDto) {
-    // Your DTO apparently does NOT have employeeId (TS error),
-    // so we just spread dto and set status. If DTO contains employeeId
-    // with correct type, it will still be included.
+    const employeeObjectId = new Types.ObjectId(dto.employeeId);
+
     const created = new this.disputeModel({
       ...dto,
+      employeeId: employeeObjectId,
       status: DisputeStatus.UNDER_REVIEW,
     });
 
     return created.save();
   }
 
+  /** PAYROLL SPECIALIST – list pending disputes */
   async getPendingDisputes() {
     return this.disputeModel
       .find({ status: DisputeStatus.UNDER_REVIEW })
       .exec();
   }
 
+  /** PAYROLL SPECIALIST – update dispute status */
   async updateDisputeStatus(
     disputeMongoId: string,
     dto: UpdateDisputeStatusDto,
   ) {
-    // Only using fields that actually exist on UpdateDisputeStatusDto:
-    // - dto.status
-    // - dto.resolutionComment
     return this.disputeModel.findByIdAndUpdate(
       disputeMongoId,
       {
@@ -135,25 +152,24 @@ export class PayrollTrackingService {
     );
   }
 
-  // ======================================================
-  // REFUNDS
-  // ======================================================
+  /* ============================================================
+     REFUNDS
+  ============================================================ */
 
+  /** FINANCE – create refund */
   async createRefund(dto: CreateRefundDto) {
-    // This assumes your CreateRefundDto has:
-    // - employeeId: string
-    // - refundDetails: any (or whatever your schema expects)
-    const objectId = new Types.ObjectId(dto.employeeId);
+    const employeeObjectId = new Types.ObjectId(dto.employeeId);
 
     const created = new this.refundModel({
       refundDetails: dto.refundDetails,
-      employeeId: objectId,
+      employeeId: employeeObjectId,
       status: RefundStatus.PENDING,
     });
 
     return created.save();
   }
 
+  /** FINANCE – update refund status */
   async updateRefundStatus(
     refundMongoId: string,
     dto: UpdateRefundStatusDto,
@@ -178,7 +194,12 @@ export class PayrollTrackingService {
     );
   }
 
+  /** FINANCE – list all refunds */
   async getRefunds() {
     return this.refundModel.find().exec();
+  }
+
+  async getRefundById(refundMongoId: string) {
+    return this.refundModel.findById(refundMongoId).exec();
   }
 }
