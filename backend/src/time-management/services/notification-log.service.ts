@@ -2,7 +2,7 @@ import { NotificationLogCreateDto } from './../dtos/notification-log-create-dto'
 import { InjectModel } from '@nestjs/mongoose';
 import { NotificationLog, NotificationLogDocument, NotificationLogSchema } from './../models/notification-log.schema';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Model, Types } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { ObjectId } from 'mongodb';
 
 @Injectable()
@@ -34,16 +34,35 @@ export class NotificationLogService{
             data: notifications
         };
     }
-    async getEmployeeNotifications(recepientId:string){ //Working!
-        const object = new ObjectId(recepientId)
-        const notifications =  await this.notificationLogModel.find({to: object})
-        if(!notifications) throw new NotFoundException('No employee notifications found!')
-        return{
-            success:true,
-            message:"Employee notifications displayed successfully!",
-            data: notifications
+async getEmployeeNotifications(recepientId: string) {
+    let notifications;
+    
+    // First, try to find by string match (in case 'to' is stored as string)
+    notifications = await this.notificationLogModel.find({ to: recepientId });
+    
+    // If no results found with string search AND recepientId is a valid ObjectId
+    // then try searching as ObjectId
+    if ((!notifications || notifications.length === 0) && isValidObjectId(recepientId)) {
+        try {
+            notifications = await this.notificationLogModel.find({ 
+                to: new Types.ObjectId(recepientId) 
+            });
+        } catch (error) {
+            // If conversion fails, return empty array or handle error
+            notifications = [];
         }
     }
+    
+    if (!notifications || notifications.length === 0) {
+        throw new NotFoundException('No employee notifications found!');
+    }
+    
+    return {
+        success: true,
+        message: "Employee notifications displayed successfully!",
+        data: notifications
+    };
+}
     async getNotificationById(notifId:string){
         const notification = await this.notificationLogModel.findById(notifId)
         if(!notification) throw new NotFoundException("Notification not found!")

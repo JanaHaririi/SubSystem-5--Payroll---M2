@@ -179,6 +179,7 @@ export default function CandidateDashboard() {
       const notifData = Array.isArray(response.data) 
         ? response.data 
         : response.data?.data || [];
+        console.log(response.data.data)
       setNotifications(notifData);
     } catch (err: any) {
       console.error('❌ Error loading notifications:', err);
