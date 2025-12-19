@@ -34,6 +34,9 @@ export class LeavePolicy {
   @Prop({ default: 0 })
   minNoticeDays: number;
 
+  @Prop({ default: 0 })
+  maxGracePeriodDays: number; // For post-leave requests (REQ-031)
+
   @Prop()
   maxConsecutiveDays?: number;
 

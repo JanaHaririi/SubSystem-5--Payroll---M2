@@ -1,142 +1,221 @@
-﻿"use client";
+"use client";
 
 import { useAuth } from "@/app/(system)/context/authContext";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
-  const router = useRouter();
   const [showCreateUser, setShowCreateUser] = useState(false);
-
-  // Check if user is HR Admin (case-insensitive check)
-  const isHRAdmin = user?.roles?.some(role =>
-    role.toLowerCase() === 'hr admin' || role.toLowerCase() === 'system admin'
-  );
 
   const handleLogout = async () => {
     await logout();
   };
 
+  function getNormalizedRoles(user: any): string[] {
+  if (!user) return [];
+  if (Array.isArray(user.roles)) return user.roles.map((r: string) => r.toLowerCase());
+  if (user.role) return [String(user.role).toLowerCase()];
+  return [];
+}
+  const roles = getNormalizedRoles(user);
+
+  // Check both roles array AND userType for different user types
+  const userRoles = user?.roles || [];
+  const userType = user?.userType;
+
+  const isHR =
+    userRoles.includes("HR Manager") ||
+    userRoles.includes("HR Employee");
+
+  const isEmployee =
+    userRoles.includes("department employee");
+
+  const isCandidate =
+    userRoles.includes("candidate") ||
+    userType === "candidate";
+
+  const isHRAdmin =
+    userRoles.includes("candidate") ||
+    userType === "candidate";
+      const isManager =
+    roles.includes("department head") ||
+    roles.includes("department_head") ||
+    roles.includes("department manager") ||
+    roles.includes("department_manager");
+
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <p className="text-white">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation Bar */}
-      <nav className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                HR Management System
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700 dark:text-gray-300">
-                Welcome, {user.name || user.email}
-              </span>
-              {isHRAdmin && (
-                <button
+    <div className="min-h-screen bg-slate-900">
+      {/* Header */}
+      
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Alert Message */}
+        <button
                   onClick={() => setShowCreateUser(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition mb-4"
                 >
                   Create User
                 </button>
-              )}
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+        <div className="rounded-lg border-l-4 border-red-600 bg-red-950/40 px-4 py-3 text-white mb-6">
+        
+          <p className="text-sm">
+            Note: The "Create User" button is for testing purposes only and will be removed later.
+          </p>
         </div>
-      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Testing Note - Only for HR Admin */}
-          {isHRAdmin && (
-            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4">
-              <p className="text-red-700 dark:text-red-400 text-sm">
-                <strong>Note:</strong> The "Create User" button is for testing purposes only and will be removed later.
-              </p>
-            </div>
-          )}
-
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+        {/* Dashboard Section */}
+        <div>
+          <h2 className="text-2xl font-semibold text-white mb-6">
             Dashboard
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <DashboardCard
-              title="Employee Profile"
-              description="View and manage employee information"
-              icon="EP"
-            />
-            <DashboardCard
-              title="Recruitment"
-              description="Manage job postings and applications"
-              icon="REC"
-            />
-            <DashboardCard
-              title="Time Management"
-              description="Track attendance and work hours"
-              icon="TIME"
-            />
+            {/* Employee Profile */}
+            <Link href="/employee-profile-management">
+              <DashboardCard
+                title="Employee Profile"
+                description="View and manage employee information"
+                icon="👤"
+              />
+            </Link>
+
+            {/* Recruitment */}
+            <Link
+              href={
+                isHR
+                  ? "/recruitment/hr/dashboard"
+                  : isEmployee
+                  ? "/recruitment/newHire/dashboard"
+                  : isCandidate
+                  ? "/recruitment/candidate/dashboard"
+                  : "/recruitment/hr/dashboard"
+              }
+            >
+              <DashboardCard
+                title="Recruitment"
+                description="Manage job postings and applications"
+                icon="🎯"
+              />
+            </Link>
+
+            {/* Time Management */}
+            <Link href="/time-management">
+              <DashboardCard
+                title="Time Management"
+                description="Track attendance and work hours"
+                icon="⏰"
+              />
+            </Link>
+
+            {/* Leave Management */}
             <DashboardCard
               title="Leave Management"
               description="Handle leave requests and balances"
-              icon="LV"
+              icon="🏖️"
             />
+
+            <Link href={"/payroll"}>
+                        {/* Payroll */}
             <DashboardCard
               title="Payroll"
               description="Process salaries and payroll"
-              icon="$$"
-              href="/payroll-tracking"
+              icon="💰"
             />
-                        <DashboardCard
-              title="Payroll Tracking"
-              description="Manage claims, disputes, and refunds"
-              icon="PT"
-              href="/payroll-tracking"
-            />
-            <DashboardCard
-              title="Performance"
-              description="Track goals and reviews"
-              icon="PRF"
-            />
-          </div>
+            </Link>
 
-          {/* User Info */}
-          <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Your Information
-            </h3>
-            <div className="space-y-2 text-gray-700 dark:text-gray-300">
-              <p><strong>Role:</strong> {user.role}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              {user.age && <p><strong>Age:</strong> {user.age}</p>}
+            {/* Performance */}
+            <Link href="/performance">
+              <DashboardCard
+                title="Performance"
+                description="Track goals and reviews"
+                icon="📈"
+              />
+            </Link>
+
+            {/* Organization Structure */}
+            <Link href="/organization-structure">
+              <DashboardCard
+                title="Organization Structure"
+                description="Manage departments and positions"
+                icon="🏛️"
+              />
+            </Link>
+                      {/* NORMAL EMPLOYEE DASHBOARD */}
+          {!isHRAdmin && isEmployee && (
+              <Link href={"/dashboard/employee/leaves"}>
+              <DashboardCard
+                title="Leave Requests"
+                description="Submit and track your leave requests"
+                icon="✉️"
+              />
+              </Link>
+          )}
+
+          {/* MANAGER / DEPARTMENT HEAD DASHBOARD */}
+          {!isHRAdmin && !isEmployee && isManager && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link href={"/dashboard/manager"}>
+                            <DashboardCard
+                title="Team Leave Requests"
+                description="Review and approve your team’s leave requests"
+                icon="👥"
+                
+              />
+              </Link>
             </div>
+          )}
+
+          </div>
+        </div>
+
+        {/* Your Information Section */}
+        <div className="mt-8 bg-slate-800 border border-slate-700 shadow rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Your Information
+          </h3>
+          <div className="space-y-2 text-slate-200">
+            <p>
+              <strong className="text-white">Role:</strong> {user.roles?.join(", ") || user.role || "N/A"}
+            </p>
+            <p>
+              <strong className="text-white">Email:</strong> {user.email || "N/A"}
+            </p>
+            {user.age && (
+              <p>
+                <strong className="text-white">Age:</strong> {user.age}
+              </p>
+            )}
+            {showCreateUser && <CreateUserModal onClose={() => setShowCreateUser(false)} />}
           </div>
         </div>
       </main>
-
-      {/* Create User Modal */}
-      {showCreateUser && <CreateUserModal onClose={() => setShowCreateUser(false)} />}
     </div>
   );
 }
 
+export function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string; }) {
+  return (
+    <div className="bg-slate-800 border border-slate-700 shadow rounded-lg p-6 hover:bg-slate-700 hover:border-slate-600 transition cursor-pointer">
+      <div className="text-4xl mb-4">{icon}</div>
+      <h3 className="text-lg font-semibold text-white mb-2">
+        {title}
+      </h3>
+      <p className="text-slate-300 text-sm">
+        {description}
+      </p>
+    </div>
+  );
+}
 function CreateUserModal({ onClose }: { onClose: () => void }) {
   const [formData, setFormData] = useState({
     employeeNumber: '',
@@ -201,7 +280,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            âœ•
+            ✕
           </button>
         </div>
 
@@ -354,39 +433,4 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-
-function DashboardCard({
-  title,
-  description,
-  icon,
-  href,
-}: {
-  title: string;
-  description: string;
-  icon: string;
-  href?: string;
-}) {
-  const content = (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-        {title}
-      </h3>
-      <p className="text-gray-600 dark:text-gray-400">
-        {description}
-      </p>
-    </div>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="block">
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
-}
-
 

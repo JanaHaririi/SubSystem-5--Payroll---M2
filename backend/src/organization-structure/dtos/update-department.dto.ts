@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId } from 'class-validator';
+import { IsOptional, IsString, IsMongoId, IsBoolean } from 'class-validator';
 
 export class UpdateDepartmentDto {
   @IsOptional()
@@ -7,9 +7,18 @@ export class UpdateDepartmentDto {
 
   @IsOptional()
   @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
 
+  // Department head must ALWAYS be a position, not an employee
   @IsOptional()
   @IsMongoId()
   headPositionId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

@@ -31,7 +31,11 @@ export class PayrollPhase4Service {
     const { payrollRunId } = dto;
 
     // 1. Validate payroll run
-    const run = await this.payrollRunsModel.findById(payrollRunId);
+    // Accept either business runId (string like PR-2025-0009) or Mongo _id
+    let run = await this.payrollRunsModel.findOne({ runId: payrollRunId });
+    if (!run) {
+      run = await this.payrollRunsModel.findById(payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
 
     // Business rules requirement:
@@ -87,12 +91,21 @@ export class PayrollPhase4Service {
       const payslip = await this.payslipModel.create({
         employeeId: rec.employeeId,
         payrollRunId: run._id,
-        baseSalary: rec.baseSalary,
-        allowances: rec.allowances,
-        deductions: rec.deductions,
-        netSalary: rec.netSalary,
-        netPay: rec.netPay,
-        paymentStatus: PaySlipPaymentStatus.PAID, // Automatically marked PAID
+        earningsDetails: {
+          baseSalary: rec.baseSalary || 0,
+          allowances: [],
+          bonuses: [],
+          benefits: [],
+          refunds: [],
+        },
+        deductionsDetails: {
+          taxes: [],
+          insurances: [],
+        },
+        totalGrossSalary: (rec.baseSalary || 0) + (rec.allowances || 0),
+        totaDeductions: rec.deductions || 0,
+        netPay: rec.netPay || 0,
+        paymentStatus: PaySlipPaymentStatus.PAID,
       });
 
       payslipResults.push({

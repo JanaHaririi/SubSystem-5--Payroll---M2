@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsBoolean } from 'class-validator';
 
 export class CreatePositionDto {
   @IsString()
@@ -13,4 +13,8 @@ export class CreatePositionDto {
 
   @IsMongoId()
   departmentId: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

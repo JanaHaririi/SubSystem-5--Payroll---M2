@@ -24,16 +24,30 @@ export class ScheduleRuleService {
     }
 
     const createdRule = await this.scheduleRuleModel.create(dto);
-    return createdRule;
+    //return createdRule;
+
+    //malak edits 
+    return {
+  success: true,
+  message: "Schedule rule created successfully",
+  data: createdRule,
+};
+
   }
 
   
   async getAllScheduleRules(){
     const rules = await this.scheduleRuleModel.find();
-    if (!rules || rules.length === 0) {
-      throw new NotFoundException("No schedule rules found");
-    }
-    return rules;
+    //if (!rules || rules.length === 0) {
+     // throw new NotFoundException("No schedule rules found");
+   // }
+    // malak edits 
+     return {
+  success: true,
+  data: rules,
+};
+
+
   }
 
   
@@ -42,7 +56,12 @@ export class ScheduleRuleService {
     if (!rule) {
       throw new NotFoundException(`Schedule rule with ID ${id} not found`);
     }
-    return rule;
+   // return rule;
+   return {
+  success: true,
+  data: rule,
+};
+
   }
 
  
@@ -51,7 +70,13 @@ export class ScheduleRuleService {
     if (!updated) {
       throw new NotFoundException(`Schedule rule with ID ${id} not found`);
     }
-    return updated;
+   // return updated;
+   return {
+  success: true,
+  message: "Schedule rule updated successfully",
+  data: updated,
+};
+
   }
 
 

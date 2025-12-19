@@ -57,7 +57,9 @@ export class ShiftAssignmentService{
             employeeId: assignData.employeeId,
             departmentId: assignData.departmentId,
             positionId: assignData.positionId,
-            shiftId: assignData.shiftId
+            shiftId: assignData.shiftId,
+            startDate: assignData.startDate,
+            endDate:assignData.endDate
         })
         return{
             success: true,
@@ -130,6 +132,7 @@ export class ShiftAssignmentService{
             const diffDays = (s.endDate!.getTime() - now) / (1000*60*60*24)
             
         })
+        
         return{
             success:true,
             message: "Shift Assignments nearing expiry returned!",
@@ -137,5 +140,19 @@ export class ShiftAssignmentService{
         }
         
     }
+    async getEmployeeShift(employeeId: string){
+        const shiftAssignment = await this.shiftAssignmentModel.findOne({employeeId: employeeId});
+        if(!shiftAssignment) throw new NotFoundException("Shift assignment for employee with id " + employeeId +" not found!");
+        const shift = await this.shiftModel.findOne({_id: shiftAssignment.shiftId});
+        if(!shift) throw new NotFoundException(`Shift with ID ${shiftAssignment.shiftId} not found!`);
+        return {
+            success: true,
+            message: "Shift found by employeeID",
+            data: {
+                ...shift.toObject(),
+                assignment: shiftAssignment.toObject() // include assignment info
+            }
+    }
+}
     
 }

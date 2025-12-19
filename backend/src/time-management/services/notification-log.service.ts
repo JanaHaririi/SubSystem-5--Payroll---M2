@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { NotificationLog, NotificationLogDocument, NotificationLogSchema } from './../models/notification-log.schema';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Model, Types } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class NotificationLogService{
@@ -34,7 +35,8 @@ export class NotificationLogService{
         };
     }
     async getEmployeeNotifications(recepientId:string){ //Working!
-        const notifications =  await this.notificationLogModel.find({to: recepientId})
+        const object = new ObjectId(recepientId)
+        const notifications =  await this.notificationLogModel.find({to: object})
         if(!notifications) throw new NotFoundException('No employee notifications found!')
         return{
             success:true,

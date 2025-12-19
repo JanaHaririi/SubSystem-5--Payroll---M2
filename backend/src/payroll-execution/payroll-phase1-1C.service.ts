@@ -28,9 +28,9 @@ export class PayrollPhase1_1CService {
     const run = await this.payrollRunsModel.findById(payrollRunId);
     if (!run) throw new BadRequestException('Payroll run not found.');
 
-    if (run.status !== PayRollStatus.UNDER_REVIEW) {
+    if (run.status !== PayRollStatus.DRAFT) {
       throw new BadRequestException(
-        'Draft file can only be generated while payroll is in UNDER_REVIEW status.',
+        'Draft file can only be generated while payroll is in DRAFT status.',
       );
     }
 

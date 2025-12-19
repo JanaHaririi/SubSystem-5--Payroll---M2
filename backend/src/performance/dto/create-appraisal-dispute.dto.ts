@@ -5,14 +5,17 @@ export class CreateAppraisalDisputeDto {
   @IsString()
   appraisalId: string;
 
+  @IsOptional()
   @IsString()
-  assignmentId: string;
+  assignmentId?: string;
 
+  @IsOptional()
   @IsString()
-  cycleId: string;
+  cycleId?: string;
 
+  @IsOptional()
   @IsString()
-  raisedByEmployeeId: string;
+  raisedByEmployeeId?: string;
 
   @IsString()
   reason: string;

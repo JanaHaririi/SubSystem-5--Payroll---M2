@@ -22,14 +22,24 @@ export class EmployeeSelfServiceService {
     const profile = await this.employeeProfileModel
       .findById(employeeId)
       .populate('accessProfileId')
-      .populate('primaryPositionId')
-      .populate('primaryDepartmentId')
-      .populate('supervisorPositionId')
-      .populate('payGradeId')
       .exec();
 
     if (!profile) {
       throw new NotFoundException('Employee profile not found');
+    }
+
+    // Manually populate only valid fields (handles null and empty string)
+    if (profile.primaryPositionId && profile.primaryPositionId.toString() !== '') {
+      await profile.populate('primaryPositionId');
+    }
+    if (profile.primaryDepartmentId && profile.primaryDepartmentId.toString() !== '') {
+      await profile.populate('primaryDepartmentId');
+    }
+    if (profile.supervisorPositionId && profile.supervisorPositionId.toString() !== '') {
+      await profile.populate('supervisorPositionId');
+    }
+    if (profile.payGradeId) {
+      await profile.populate('payGradeId');
     }
 
     // Retrieve appraisal history from Performance module with error handling
@@ -41,8 +51,14 @@ export class EmployeeSelfServiceService {
       console.error('Failed to fetch appraisal history:', error.message);
     }
 
+    const profileObj = profile.toObject();
+
+    // Extract roles from accessProfileId for easier access
+    const roles = (profileObj.accessProfileId as any)?.roles || [];
+
     return {
-      ...profile.toObject(),
+      ...profileObj,
+      roles, // Add roles at top level for convenience
       appraisalHistory,
     };
   }
@@ -107,12 +123,57 @@ export class EmployeeSelfServiceService {
 
   // Get team members (US-E4-01, US-E4-02)
   async getTeamMembers(managerPositionId: string): Promise<EmployeeProfileDocument[]> {
-    return await this.employeeProfileModel
+    console.log('🔍 Finding team members where supervisorPositionId =', managerPositionId);
+
+    // First, try to find employees who report to this position
+    console.log('🧩 Query params:', { supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE });
+    const directReports = await this.employeeProfileModel
       .find({ supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE })
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
-      .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
       .exec();
+
+    console.log('📦 Query result count:', directReports.length);
+    console.log('👥 Team members found:', directReports.length);
+    if (directReports.length > 0) {
+      console.log('👤 First team member:', directReports[0]);
+      directReports.forEach(emp => {
+        console.log('  -', emp.fullName, '| supervisorPositionId:', emp.supervisorPositionId);
+      });
+    } else {
+      console.warn('⚠️ EMPTY RESULT: No direct reports found with supervisorPositionId =', managerPositionId);
+    }
+
+    // If there are direct reports, return them
+    if (directReports.length > 0) {
+      return directReports;
+    }
+
+    // Otherwise, check if this manager is a department head
+    // Find which department has this position as headPositionId
+    console.log('🏢 Checking if position is department head...');
+    const Department = this.employeeProfileModel.db.model('Department');
+    const department = await Department.findOne({ headPositionId: managerPositionId }).exec();
+
+    console.log('🏢 Department head check:', department ? department.name : 'Not a department head');
+
+    if (department) {
+      // Return all active employees in this department
+      console.log('🧩 Query params:', { primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE });
+      const deptEmployees = await this.employeeProfileModel
+        .find({ primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE })
+        .populate('primaryPositionId')
+        .populate('primaryDepartmentId')
+        .exec();
+
+      console.log('📦 Query result count:', deptEmployees.length);
+      console.log('👥 Found', deptEmployees.length, 'employees in department');
+      return deptEmployees;
+    }
+
+    // No team found
+    console.warn('⚠️ No team members found — check supervisorPositionId mapping');
+    return [];
   }
 
   // Get specific team member profile (US-E4-01)

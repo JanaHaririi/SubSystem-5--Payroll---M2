@@ -1,0 +1,123 @@
+/* SearchForm.module.css - Purple Theme */
+
+.searchForm {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #4d2f63;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid #4d2f63; /* Light purple outline */
+}
+
+.formGroup {
+  display: flex;
+  gap: 12px;
+  max-width: 800px;
+  align-items: center;
+}
+
+/* Select dropdown with purple styling */
+.select {
+  padding: 12px 16px;
+  border: 0px solid #4d2f63; /* Purple border */
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #b89bf1;
+  cursor: pointer;
+  min-width: 150px;
+  transition: all 0.2s ease;
+}
+
+.select:hover {
+  border-color: #b89bf1;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.select:focus {
+  outline: none;
+  border-color: #4d2f63;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2);
+}
+
+/* Input field - White with purple outline and search icon */
+.input {
+  flex: 1;
+  padding: 12px 16px;
+  padding-left: 40px; /* Space for search icon */
+  border: 2px solid #4d2f63; /* Purple border */
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239333ea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 20px;
+  transition: all 0.2s ease;
+}
+
+.input:hover {
+  border-color: #8852af;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.input:focus {
+  outline: none;
+  border-color: #8852af;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+/* Button - Purple with white text + hover grow effect */
+.button {
+  padding: 12px 24px;
+  background-color: #b89bf1; /* Purple */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button:hover {
+  background-color: #693699; /* Darker purple on hover */
+  transform: scale(1.08); /* Grow effect */
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+}
+
+.button:active {
+  transform: scale(1.02);
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .formGroup {
+    flex-direction: column;
+  }
+
+  .select,
+  .input,
+  .button {
+    width: 100%;
+  }
+  
+  .input {
+    padding-left: 40px; /* Keep icon space on mobile */
+  }
+}

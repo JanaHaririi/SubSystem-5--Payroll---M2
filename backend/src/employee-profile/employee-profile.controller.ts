@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -64,30 +65,19 @@ export class EmployeeProfileController {
     return this.candidateRegistrationService.updateCandidateProfile(user.employeeId, updateDto);
   }
 
-  @Put('candidate/change-password')
-  @UseGuards(AuthGuard)
-  async changeCandidatePassword(
-    @CurrentUser() user: CurrentUserData,
-    @Body() passwordDto: any,
-  ) {
-    return this.candidateRegistrationService.changePassword(
-      user.employeeId,
-      passwordDto.currentPassword,
-      passwordDto.newPassword,
-    );
-  }
+  
 
   // ==================== SEARCH ROUTES ====================
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getAllEmployees() {
     return this.employeeProfileService.findAll();
   }
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async createEmployee(@Body() createDto: CreateEmployeeDto) {
     return this.employeeProfileService.create(createDto);
   }
@@ -183,24 +173,71 @@ export class EmployeeProfileController {
   // ==================== MANAGER ROUTES ====================
   @Get('team')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
   async getTeamMembers(@CurrentUser() user: CurrentUserData) {
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMembers(managerPositionId);
+    console.log("➡️ Endpoint called: /employee-profile/team");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+
+    const normalizedRoles = user.roles?.map(r =>
+      r.toUpperCase().replace(/\s+/g, "_")
+    );
+    console.log("🎭 Normalized roles:", normalizedRoles);
+
+    console.log("🔍 Fetching manager profile");
+    // Get the manager's employee profile to find their primaryPositionId
+    const manager = await this.employeeProfileService.getMyProfile(user.employeeId);
+    console.log("📌 Manager primaryPositionId:", manager.primaryPositionId);
+
+    if (!manager.primaryPositionId) {
+      console.warn("⚠️ No position assigned to manager — returning empty team");
+      return []; // No position assigned, return empty team
+    }
+    // Convert ObjectId to string - handle both string and object types
+    const positionId = typeof manager.primaryPositionId === 'string'
+      ? manager.primaryPositionId
+      : manager.primaryPositionId._id?.toString() || manager.primaryPositionId.toString();
+
+    console.log("🔍 Finding team members where supervisorPositionId =", positionId);
+    const team = await this.employeeProfileService.getTeamMembers(positionId);
+    console.log("👥 Team members found:", team.length);
+    if (team.length > 0) {
+      console.log("👤 First team member:", team[0]);
+    } else {
+      console.warn("⚠️ No team members found — check supervisorPositionId mapping");
+    }
+    console.log("✅ Team response sent");
+    return team;
   }
 
   @Get('team/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
   async getTeamMemberProfile(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
   ) {
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMemberProfile(id, managerPositionId);
+    // Get the manager's employee profile to find their primaryPositionId
+    const manager = await this.employeeProfileService.getMyProfile(user.employeeId);
+    if (!manager.primaryPositionId) {
+      throw new NotFoundException('Manager position not found');
+    }
+    // Convert ObjectId to string - handle both string and object types
+    const positionId = typeof manager.primaryPositionId === 'string'
+      ? manager.primaryPositionId
+      : manager.primaryPositionId._id?.toString() || manager.primaryPositionId.toString();
+
+    return this.employeeProfileService.getTeamMemberProfile(id, positionId);
   }
 
   // ==================== CHANGE REQUEST MANAGEMENT ====================
+  @Get('change-requests/all')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
+  async getAllChangeRequests() {
+    return this.employeeProfileService.getAllChangeRequests();
+  }
+
   @Get('change-requests/pending')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)

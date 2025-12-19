@@ -1,22 +1,58 @@
- import { IsString, IsEnum, IsOptional } from 'class-validator';
-import { TimeExceptionType, TimeExceptionStatus } 
-  from '../models/enums';
+import { IsNotEmpty, IsOptional, IsEnum, IsString } from "class-validator";
+import { TimeExceptionStatus, TimeExceptionType } from "../models/enums/index";
+import { Types } from "mongoose";
 
 export class TimeExceptionCreateDto {
-  
+  @IsNotEmpty()
   @IsString()
-  employeeId: string;
+  employeeId: Types.ObjectId;
 
+  @IsNotEmpty()
   @IsEnum(TimeExceptionType)
   type: TimeExceptionType;
 
+  @IsNotEmpty()
   @IsString()
-  attendanceRecordId: string;
+  attendanceRecordId: Types.ObjectId;
 
+  @IsNotEmpty()
   @IsString()
-  assignedTo: string;
+  assignedTo: Types.ObjectId;
 
   @IsOptional()
   @IsString()
   reason?: string;
+
+  @IsOptional()
+  @IsEnum(TimeExceptionStatus)
+  status?: TimeExceptionStatus;
+}
+
+export class TimeExceptionUpdateDto {
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  employeeId?: Types.ObjectId;
+
+  @IsOptional()
+  @IsEnum(TimeExceptionType)
+  type?: TimeExceptionType;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  attendanceRecordId?: Types.ObjectId;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
+  assignedTo?: Types.ObjectId;
+
+  @IsOptional()
+  @IsString()
+  reason?: string;
+
+  @IsOptional()
+  @IsEnum(TimeExceptionStatus)
+  status?: TimeExceptionStatus;
 }

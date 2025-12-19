@@ -33,7 +33,7 @@ export class AttendanceCorrectionRequestService {
   async updateCorrectionRequest(id: string, dto: UpdateAttendanceCorrectionRequestDto) {
     const request = await this.requestModel.findById(id);
     if (!request) throw new NotFoundException('Correction request not found!');
-    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW) {
+    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW && request.status !== CorrectionRequestStatus.ESCALATED) {
       throw new BadRequestException('Only pending requests can be updated.');
     }
 
@@ -52,7 +52,7 @@ export class AttendanceCorrectionRequestService {
   async approveCorrectionRequest(id: string) {
     const request = await this.requestModel.findById(id);
     if (!request) throw new NotFoundException('Correction request not found!');
-    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW) {
+    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW && request.status !== CorrectionRequestStatus.ESCALATED) {
       throw new BadRequestException('Only pending requests can be approved.');
     }
 
@@ -70,7 +70,7 @@ export class AttendanceCorrectionRequestService {
   async rejectCorrectionRequest(id: string, reason: string) {
     const request = await this.requestModel.findById(id);
     if (!request) throw new NotFoundException('Correction request not found!');
-    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW) {
+    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW && request.status !== CorrectionRequestStatus.ESCALATED) {
       throw new BadRequestException('Only pending requests can be rejected.');
     }
 
@@ -85,11 +85,32 @@ export class AttendanceCorrectionRequestService {
     };
   }
 
+
   async listEmployeeCorrectionRequests(employeeId: string) {
     return await this.requestModel
-      .find({ employeeId })
+      .find({ employeeId: new Types.ObjectId(employeeId) })
       .populate('attendanceRecord')
       .exec();
+  }
+
+  async escalateCorrectionRequest(id: string) {
+    const request = await this.requestModel.findById(id);
+    
+    if (!request) throw new NotFoundException('Correction request not found!');
+    
+    if (request.status !== CorrectionRequestStatus.SUBMITTED && 
+        request.status !== CorrectionRequestStatus.IN_REVIEW) {
+      throw new BadRequestException('Only pending requests can be escalated.');
+    }
+  
+    request.status = CorrectionRequestStatus.ESCALATED;
+    await request.save();
+  
+    return {
+      success: true,
+      message: 'Correction request escalated successfully!',
+      data: request,
+    };
   }
 
   async autoEscalatePendingCorrections() {
@@ -99,18 +120,30 @@ export class AttendanceCorrectionRequestService {
   
     const updated = await this.requestModel.updateMany(
       {
-        status: CorrectionRequestStatus.IN_REVIEW,
+        status: CorrectionRequestStatus.SUBMITTED,
         createdAt: { $lt: cutoff }
-      },
+      }, 
       {
         $set: { status: CorrectionRequestStatus.ESCALATED }
       }
     );
   
     return {
-      escalatedCount: updated.modifiedCount
+      success: true,
+      escalatedCount: updated.modifiedCount,
     };
+    
   }
+
+  // Get all correction requests (for managers/admins)
+async getAllCorrectionRequests() {
+  return await this.requestModel
+    .find()
+    .populate('employeeId', 'firstName lastName email')
+    .populate('attendanceRecord')
+    .sort({ createdAt: -1 })
+    .exec();
+}
   
 
  

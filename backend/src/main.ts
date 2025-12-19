@@ -14,7 +14,8 @@ async function bootstrap() {
   // Enable cookie parsing
   app.use(cookieParser());
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Server running on ${process.env.PORT}`)
+  const port = process.env.PORT ?? 4000;
+  await app.listen(port);
+  console.log(`Server running on ${port}`)
 }
 bootstrap();

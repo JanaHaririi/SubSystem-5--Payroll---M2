@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { payrollRuns } from './models/payrollRuns.schema';
 import { ProcessHREventsDto } from './dto/process-hr-events.dto';
@@ -40,8 +40,11 @@ export class PayrollPhase1_1AService {
   async processHREvents(dto: ProcessHREventsDto) {
     const { payrollRunId } = dto;
 
-    // 1) Validate payroll run
-    const run = await this.payrollRunsModel.findById(payrollRunId);
+    // 1) Validate payroll run (accept business runId or Mongo _id)
+    let run = await this.payrollRunsModel.findOne({ runId: payrollRunId });
+    if (!run && Types.ObjectId.isValid(payrollRunId)) {
+      run = await this.payrollRunsModel.findById(payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
 
     if (run.status !== PayRollStatus.DRAFT) {
@@ -50,8 +53,11 @@ export class PayrollPhase1_1AService {
       );
     }
 
-    // 2) Fetch employees
-    const employees = await this.employeeProfileModel.find({});
+    // 2) Fetch ALL active employees in the company
+    // Payroll runs apply to the entire company, not filtered by entity
+    const employees = await this.employeeProfileModel.find({
+      status: 'ACTIVE'
+    });
 
     let signingBonusProcessed = 0;
     let exitBenefitsProcessed = 0;
@@ -72,68 +78,72 @@ export class PayrollPhase1_1AService {
         proratedEmployees++;
       }
 
-      // B) SIGNING BONUS AUTO APPROVAL
+      // B) DETECT SIGNING BONUS (only count, do NOT auto-approve)
+      // Phase 0 is where Specialist manually approves; this phase just detects new hires
       const bonus = await this.signingBonusModel.findOne({
         employeeId: emp._id,
       });
 
-      if (
-        bonus &&
-        emp.eligibleForBonus &&
-        bonus.status === BonusStatus.PENDING
-      ) {
-        bonus.status = BonusStatus.APPROVED;
-        await bonus.save();
-        signingBonusProcessed++;
+      if (bonus && emp.isNewHire && emp.eligibleForBonus) {
+        // Just flag it as detected; Specialist will approve in Phase 0
+        // If already APPROVED by Specialist, it will be included in Phase 1.1 draft
+        if (bonus.status === BonusStatus.PENDING) {
+          signingBonusProcessed++; // count pending detections for reporting
+        }
       }
 
-      // C) TERMINATION / RESIGNATION BENEFITS
+      // C) DETECT TERMINATION/RESIGNATION BENEFITS (only count, do NOT auto-approve)
+      // Phase 0 is where Specialist manually approves; this phase detects terminations
       const exit = await this.exitBenefitsModel.findOne({
         employeeId: emp._id,
       });
 
-      if (exit && exit.status === BenefitStatus.PENDING) {
-        // Fetch rule configuration
-        const config = await this.benefitsConfigModel.findById(exit.benefitId);
+      if (exit && emp.terminationDate) {
+        // Just flag it as detected; Specialist will approve in Phase 0
+        if (exit.status === BenefitStatus.PENDING) {
+          const config = await this.benefitsConfigModel.findById(exit.benefitId);
+          const computed = config?.amount ?? 0;
+          exitBenefitsProcessed++; // count pending detections for reporting
 
-        // Calculation based on schema:
-        // THERE IS ONLY `amount`, no multiplier/percentage/etc.
-        const computed = config?.amount ?? 0;
-
-        // Only field allowed to change in DB is status
-        exit.status = BenefitStatus.APPROVED;
-        await exit.save();
-
-        exitBenefitsProcessed++;
-
-        // Return in API, not stored in DB
-        exitBenefitsResponse.push({
-          employeeId: emp._id,
-          benefitId: exit.benefitId,
-          terminationId: exit.terminationId,
-          computedAmount: computed,
-          ruleApplied: config?.name, // <- FIX HERE
-        });
+          // Return in API for Specialist visibility, not stored in DB
+          exitBenefitsResponse.push({
+            employeeId: emp._id,
+            benefitId: exit.benefitId,
+            terminationId: exit.terminationId,
+            computedAmount: computed,
+            ruleApplied: config?.name,
+          });
+        }
       }
     }
 
     return {
-      message: 'HR Events processed successfully.',
+      message: 'HR Events detected. Specialist must review and approve in Phase 0 before amounts are included in payroll.',
       summary: {
         employeesChecked: employees.length,
         proratedEmployees,
-        signingBonusProcessed,
-        exitBenefitsProcessed,
+        newHireSigningBonusesPending: signingBonusProcessed,
+        terminationBenefitsPending: exitBenefitsProcessed,
       },
-      exitBenefitsDetails: exitBenefitsResponse,
+      detectedExitBenefits: exitBenefitsResponse,
     };
   }
 
   // -----------------------------------------
   // HELPER: Proration (kept for future)
   // -----------------------------------------
-  private calculateProrated(emp: any) {
-    const base = emp.baseSalary ?? 0;
+  private async calculateProrated(emp: any) {
+    // Fetch pay grade to get correct base salary
+    const payGradeId = emp.payGradeId;
+    let base = 0;
+    
+    if (payGradeId) {
+      // Import payGrade model or fetch it - for now we note this needs payGradeModel injection
+      // const grade = await this.payGradeModel.findById(payGradeId);
+      // base = grade?.baseSalary ?? 0;
+      base = 0; // TODO: Inject payGradeModel to fetch actual salary
+    }
+    
     const totalDays = 30;
     const activeDays = emp.activeDaysInPeriod ?? totalDays;
     return (base * activeDays) / totalDays;

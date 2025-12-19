@@ -32,13 +32,21 @@ export class PayrollPhase2Service {
 
     if (!payrollRunId) throw new BadRequestException('payrollRunId is required.');
 
-    const runIdObj = Types.ObjectId.isValid(payrollRunId)
-      ? new Types.ObjectId(payrollRunId)
-      : null;
-    if (!runIdObj) throw new BadRequestException('Invalid payrollRunId.');
-
-    const run = await this.payrollrollFindByIdSafe(runIdObj);
+    // Try to find by business runId first, then by MongoDB _id
+    let run = await this.payrollRunsModel.findOne({ runId: payrollRunId });
+    
+    if (!run && Types.ObjectId.isValid(payrollRunId)) {
+      run = await this.payrollRunsModel.findById(payrollRunId);
+    }
+    
     if (!run) throw new BadRequestException('Payroll run not found.');
+
+    // Phase 2 should only run on DRAFT payrolls (after Phase 1.1 completes)
+    if (run.status !== PayRollStatus.DRAFT) {
+      throw new BadRequestException(
+        'Phase 2 (Exception Review) can only run on DRAFT payrolls. Current status: ' + run.status,
+      );
+    }
 
     // Fetch all payroll detail records for this run
     const details = await this.detailsModel.find({ payrollRunId: run._id }).lean();

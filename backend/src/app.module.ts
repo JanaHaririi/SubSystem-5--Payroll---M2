@@ -1,4 +1,3 @@
-
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
@@ -17,12 +16,22 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({isGlobal:true}),
-    MongooseModule.forRoot(process.env.DB_URL!),
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(process.env.DB_URL!, {
+      dbName: 'SWP1DB',          // 🔥 ADD THIS
+    }),
     AuthModule,
-    TimeManagementModule, RecruitmentModule, LeavesModule, PayrollExecutionModule, PayrollConfigurationModule, PayrollTrackingModule, EmployeeProfileModule, OrganizationStructureModule, PerformanceModule],
+    TimeManagementModule,
+    RecruitmentModule,
+    LeavesModule,
+    PayrollExecutionModule,
+    PayrollConfigurationModule,
+    PayrollTrackingModule,
+    EmployeeProfileModule,
+    OrganizationStructureModule,
+    PerformanceModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-

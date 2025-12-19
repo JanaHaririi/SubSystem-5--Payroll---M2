@@ -151,4 +151,14 @@ export class UpdateEmployeeMasterDto {
   @IsOptional()
   @IsMongoId()
   accessProfileId?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
 }

@@ -37,95 +37,22 @@ export class PayrollPhase1_1BService {
   // -----------------------------------------
   // GENERATE PHASE 1.1.B DETAILS
   // -----------------------------------------
+  // ⚠️ DEPRECATED: This method is consolidated into Phase 1.1
+  // Keep for backward compatibility but it should not be used
+  // -----------------------------------------
   async processPayrollValues(dto: GeneratePayrollDraftDto) {
-    const { payrollRunId } = dto;
-
-    // 1) Validate payroll run
-    const run = await this.payrollRunsModel.findById(payrollRunId);
-    if (!run) throw new BadRequestException('Payroll run not found.');
-
-    if (run.status !== PayRollStatus.UNDER_REVIEW) {
-      throw new BadRequestException(
-        'Phase 1.1.B can only run after draft generation (status UNDER_REVIEW).',
-      );
-    }
-
-    // 2) Fetch employees
-    const employees = await this.employeeProfileModel.find({ contractStatus: 'active' });
-
-    let totalNetPay = 0;
-    let exceptions = 0;
-
-    const details: any[] = [];
-
-    // 3) Loop employees & compute salary components
-    for (const emp of employees) {
-      const baseSalary = emp.baseSalary ?? 0;
-      const allowances = emp.allowancesTotal ?? 0;
-
-      // A) Penalties
-      const penaltyDoc = await this.penaltiesModel.findOne({ employeeId: emp._id });
-      const penaltiesTotal =
-        penaltyDoc?.penalties?.reduce((sum, p) => sum + (p.amount || 0), 0) ?? 0;
-
-      // B) Signing Bonus (must be APPROVED)
-      const bonusDoc = await this.signingBonusModel.findOne({ employeeId: emp._id });
-      const bonusAmount =
-        bonusDoc && bonusDoc.status === BonusStatus.APPROVED
-          ? emp.signingBonusAmount ?? 0 // or from configuration if exists
-          : 0;
-
-      // C) Termination / resignation benefits (must be APPROVED)
-      const exitDoc = await this.exitBenefitsModel.findOne({ employeeId: emp._id });
-      const exitBenefitAmount =
-        exitDoc && exitDoc.status === BenefitStatus.APPROVED
-          ? emp.exitBenefitAmount ?? 0
-          : 0;
-
-      // D) Salary formula (no tax or insurance here)
-      const gross = baseSalary + allowances + bonusAmount + exitBenefitAmount;
-      const deductions = penaltiesTotal;
-      const netPay = gross - deductions;
-
-      totalNetPay += netPay;
-
-      // Missing bank account → exception
-      const hasBank = !!emp.bankAccount;
-      const bankStatus = hasBank ? BankStatus.VALID : BankStatus.MISSING;
-
-      details.push({
-        employeeId: emp._id,
-        baseSalary,
-        allowances,
-        deductions,
-        netSalary: gross - deductions,
-        netPay,
-        bankStatus,
-        exceptions: hasBank ? null : 'Missing bank account',
-        bonus: bonusAmount,
-        benefit: exitBenefitAmount,
-        payrollRunId: run._id,
-      });
-
-      if (!hasBank) exceptions++;
-    }
-
-    // 4) Insert details into DB
-    await this.payrollDetailsModel.insertMany(details);
-
-    // 5) Update payroll run summary
-    run.totalnetpay = totalNetPay;
-    run.exceptions = exceptions;
-    await run.save();
-
-    return {
-      message: 'Phase 1.1.B processed successfully.',
-      employeesProcessed: employees.length,
-      exceptions,
-      totalNetPay,
-    };
+    throw new Error(
+      'Phase 1.1.B (processPayrollValues) is deprecated. ' +
+      'All payroll calculations are now done in Phase 1.1 (generatePayrollDraft). ' +
+      'Call /generate-draft endpoint instead of /apply-penalties.'
+    );
   }
+
   async applyPenalties(dto: Phase1_1BDto) {
-    return this.processPayrollValues(dto);
+    throw new Error(
+      'Phase 1.1.B (applyPenalties) is deprecated. ' +
+      'All payroll calculations are now done in Phase 1.1 (generatePayrollDraft). ' +
+      'Call /generate-draft endpoint instead of /apply-penalties.'
+    );
   }
 }

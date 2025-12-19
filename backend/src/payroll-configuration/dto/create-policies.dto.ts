@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PolicyType } from '../enums/payroll-configuration-enums';
 import { Applicability } from '../enums/payroll-configuration-enums';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
@@ -18,8 +18,7 @@ export class createPayrollPoliciesDto {
   @IsNotEmpty()
   effectiveDate: Date;
 
-  @IsNumber()
-  @Min(0)
+  @IsNotEmpty()
   ruleDefinition: {
     percentage: number;
     fixedAmount: number;
@@ -30,9 +29,9 @@ export class createPayrollPoliciesDto {
   @IsEnum(Applicability)
   applicability: Applicability;
 
-  @IsNotEmpty()
   @IsEnum(ConfigStatus)
-  ConfigStatus: ConfigStatus;
+  @IsOptional()
+  status?: ConfigStatus;
 }
 
 

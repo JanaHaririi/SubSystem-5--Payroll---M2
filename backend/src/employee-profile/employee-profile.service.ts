@@ -98,6 +98,10 @@ export class EmployeeProfileService {
     return this.changeRequestService.getMyChangeRequests(employeeId);
   }
 
+  async getAllChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
+    return this.changeRequestService.getAllChangeRequests();
+  }
+
   async getPendingChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
     return this.changeRequestService.getPendingChangeRequests();
   }

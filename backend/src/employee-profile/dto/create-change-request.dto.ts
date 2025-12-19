@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsObject, IsMongoId } from 'class-validator';
 
 export class CreateChangeRequestDto {
   @ApiProperty({
@@ -20,8 +20,26 @@ export class CreateChangeRequestDto {
   reason?: string;
 
   @ApiProperty({
-    description: 'Requested changes as key-value pairs',
-    example: { jobTitle: 'Senior Developer', department: 'Engineering' },
+    description: 'Requested primary department ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsOptional()
+  @IsMongoId()
+  requestedPrimaryDepartmentId?: string;
+
+  @ApiProperty({
+    description: 'Requested primary position ID',
+    example: '507f1f77bcf86cd799439012',
+    required: false,
+  })
+  @IsOptional()
+  @IsMongoId()
+  requestedPrimaryPositionId?: string;
+
+  @ApiProperty({
+    description: 'Requested changes as key-value pairs for other fields',
+    example: { maritalStatus: 'MARRIED', firstName: 'John' },
     required: false,
   })
   @IsOptional()

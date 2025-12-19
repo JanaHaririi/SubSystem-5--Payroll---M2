@@ -12,6 +12,14 @@ export class UpdateCompanySettingsDto {
   @IsOptional()
   @IsString()
   currency?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsString()
+  payCycle?: string;
 }
 
 

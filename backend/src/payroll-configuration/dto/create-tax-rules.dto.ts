@@ -1,5 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { ConfigStatus } from '../enums/payroll-configuration-enums';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class createTaxRulesDTO {
   @IsString()
@@ -14,9 +13,5 @@ export class createTaxRulesDTO {
   @IsNotEmpty()
   @Min(0)
   rate: number;
-
-  @IsNotEmpty()
-  @IsEnum(ConfigStatus)
-  status: ConfigStatus;
 }
 

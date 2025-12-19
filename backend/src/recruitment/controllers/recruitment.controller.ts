@@ -17,6 +17,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
+import { Public } from 'src/payroll-tracking/decorators/public.decorator';
 
 
 @Controller('recruitment')
@@ -65,7 +66,7 @@ export class RecruitmentController {
   }
 
   @Get('requisitions')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE , SystemRole.JOB_CANDIDATE, SystemRole.DEPARTMENT_EMPLOYEE)
   getAllJobRequisitions() {
     return this.recruitmentService.getAllJobRequisitions();
   }
@@ -97,19 +98,27 @@ export class RecruitmentController {
   }
 
   @Get('offers')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE )
   getAllOffers() {
     return this.recruitmentService.getAllOffers();
   }
 
   @Get('offers/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   getOffer(@Param('id') id: string) {
     return this.recruitmentService.getOffer(id);
   }
 
+  // Get offers by candidate ID
+  @Get('offers/candidate/:candidateId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE)
+  getOffersByCandidate(@Param('candidateId') candidateId: string) {
+    return this.recruitmentService.getOffersByCandidate(candidateId);
+  }
+
+
   @Patch('offers/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   updateOffer(@Param('id') id: string, @Body() updateJobOfferDto: UpdateJobOfferDto) {
     return this.recruitmentService.updateOffer(id, updateJobOfferDto);
   }
@@ -117,7 +126,7 @@ export class RecruitmentController {
   //referral
 
   @Post('referrals')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   createReferral(@Body() createReferralDto: CreateReferralDto) {
     return this.recruitmentService.createReferral(createReferralDto);
   }
@@ -136,23 +145,26 @@ export class RecruitmentController {
     return this.recruitmentService.createInterview(createInterviewDto);
   }
 
-  @Get('interviews')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
-  getAllInterviews() {
-    return this.recruitmentService.getAllInterviews();
-  }
-
-  @Get('interviews/panel-member/:userId')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+   @Get('interviews/panel-member/:userId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   getInterviewsByPanelMember(@Param('userId') userId: string) {
     return this.recruitmentService.getInterviewsByPanelMember(userId);
   }
-
-
-  @Get('interviews/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Get('interviews/applications/:applicationId')
+  @Roles(SystemRole.JOB_CANDIDATE )
+  getInterviewByApplicationId( @Param('applicationId') applicationId: string){
+  return this.recruitmentService.getInterviewByApplicationId(applicationId);
+  }
+   @Get('interviews/:id')
+  @Roles(SystemRole.HR_MANAGER , SystemRole.HR_EMPLOYEE)
   getInterview(@Param('id') id: string) {
     return this.recruitmentService.getInterview(id);
+  }
+
+  @Get('interviews')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  getAllInterviews() {
+    return this.recruitmentService.getAllInterviews();
   }
 
   @Patch('interviews/:id')
@@ -164,7 +176,7 @@ export class RecruitmentController {
   //feedback
 
   @Post('feedback')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   createFeedback(@Body() createFeedbackDto: CreateFeedbackDto) {
     return this.recruitmentService.createFeedback(createFeedbackDto);
   }
@@ -175,49 +187,61 @@ export class RecruitmentController {
     return this.recruitmentService.getAllFeedback();
   }
 
-  // @Get('feedback/by-interview/:interviewId') 
-  // getFeedbackByInterview(@Param('interviewId') interviewId: string) {
-  //   return this.recruitmentService.getFeedbackByInterview(interviewId);
-  // }
+  @Get('feedback/by-interview/:interviewId') 
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  getFeedbackByInterview(@Param('interviewId') interviewId: string) {
+    return this.recruitmentService.getFeedbackByInterview(interviewId);
+  }
 
   @Get('feedback/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   getFeedback(@Param('id') id: string) {
     return this.recruitmentService.getFeedback(id);
   }
 
   @Patch('feedback/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   updateFeedback(@Param('id') id: string, @Body() updateFeedbackDto: UpdateFeedbackDto) {
     return this.recruitmentService.updateFeedback(id, updateFeedbackDto);
   }
 
   // application history routes
 
-  @Get('applications/:id/history')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
-  getApplicationHistory(@Param('id') id: string) {
-    return this.recruitmentService.getApplicationHistory(id);
-  }
+ @Get('applications/:id/history')
+@Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+async getApplicationHistory(@Param('id') id: string) {  // Add 'async' here
+  console.log('Getting history for application:', id);
+  const result = await this.recruitmentService.getApplicationHistory(id);  // Add 'await' here
+  console.log('History result:', result);
+  return result;
+}
 
   //application routes
 
   @Post('applications')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.JOB_CANDIDATE)
+  //@Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
   createApplication(@Body() createApplicationDto: CreateApplicationDto) {
     return this.recruitmentService.createApplication(createApplicationDto);
   }
 
   @Get('applications')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE )
   getAllApplications() {
     return this.recruitmentService.getAllApplications();
   }
 
   @Get('applications/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   getApplication(@Param('id') id: string) {
     return this.recruitmentService.getApplication(id);
+  }
+
+    // Get applications by candidate ID
+  @Get('applications/candidate/:candidateId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE)
+  getApplicationsByCandidate(@Param('candidateId') candidateId: string) {
+    return this.recruitmentService.getApplicationsByCandidate(candidateId);
   }
 
   @Patch('applications/:id')

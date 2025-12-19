@@ -66,33 +66,197 @@ export class OffboardingService {
 
   ) {}
 
-  async createTerminationRequest(terminationRequestData: CreateTerminationRequestDto): Promise<TerminationRequestDocument> {
+
+  
+
+  // async createTerminationRequest(terminationRequestData: CreateTerminationRequestDto): Promise<TerminationRequestDocument> {
+  //   let shouldCreateRequest = false;
+  //   let performanceIssueDetected = false;
+
+  //   // USER STORY: HR Manager initiates termination based on performance data
+  //   if (terminationRequestData.initiator === TerminationInitiation.HR || 
+  //       terminationRequestData.initiator === TerminationInitiation.MANAGER) {
+      
+  //     try {
+  //       // Get employee's latest appraisal
+  //       const employeeAppraisals = await this.performanceService.getEmployeeAppraisals(
+  //         terminationRequestData.employeeId.toString()
+  //       );
+
+  //       if (employeeAppraisals && employeeAppraisals.length > 0) {
+  //         const latestAppraisal = employeeAppraisals[0]; // Most recent
+
+  //         if (latestAppraisal.templateId && latestAppraisal.latestAppraisalId) {
+  //           // Get the template
+  //           const template = await this.performanceService.getAppraisalTemplateById(
+  //             latestAppraisal.templateId.toString()
+  //           );
+
+  //           // Get the appraisal record
+  //           const appraisalRecord = await this.performanceService.getAppraisalRecordById(
+  //             latestAppraisal.latestAppraisalId.toString()/*latestAppraisalId.toString()*/
+  //           );
+
+  //           // Check if record exists and has valid data
+  //           if (appraisalRecord && 
+  //               appraisalRecord.totalScore !== undefined && 
+  //               template && 
+  //               template.ratingScale) {
+              
+  //             // Compare score with template minimum
+  //             if (appraisalRecord.totalScore < template.ratingScale.min) {
+  //               // Performance below minimum - allow termination request creation
+  //               performanceIssueDetected = true;
+  //               shouldCreateRequest = true;
+
+  //               // Create the termination request
+  //               const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
+  //               const savedRequest = await newTerminationRequest.save();
+
+  //               // Send performance-related notifications
+  //               await this.notificationLogService.sendNotification({
+  //                 to: newTerminationRequest.employeeId,
+  //                 type: 'Termination Notice - Poor Performance',
+  //                 message: `A termination request has been initiated due to performance below minimum acceptable standards. Your latest appraisal score: ${appraisalRecord.totalScore}/${template.ratingScale.max} (Minimum required: ${template.ratingScale.min}). Reason: ${savedRequest.reason}. Please contact HR immediately.`,
+  //               });
+
+  //               // Notify HR
+  //               const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
+
+  //               if (hrManagers && hrManagers.length > 0) {
+  //                 await this.notificationLogService.sendNotification({
+  //                   to: hrManagers[0].id,
+  //                   type: 'Termination Request - Below Minimum Performance',
+  //                   message: `Termination request created for employee ${savedRequest.employeeId}. Latest appraisal score ${appraisalRecord.totalScore}/${template.ratingScale.max} is below minimum of ${template.ratingScale.min}. Immediate action required.`,
+  //                 });
+  //               }
+
+  //               return savedRequest;
+  //             } else {
+  //               // Performance is acceptable - do not create termination request
+  //               throw new BadRequestException(
+  //                 `Cannot create termination request for performance reasons. Employee's latest appraisal score (${appraisalRecord.totalScore}/${template.ratingScale.max}) meets or exceeds minimum requirements (${template.ratingScale.min}).`
+  //               );
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       // No appraisal data found - cannot create HR/Manager initiated termination
+  //       if (!shouldCreateRequest) {
+  //         throw new BadRequestException(
+  //           'Cannot create termination request. No performance appraisal data found to justify termination.'
+  //         );
+  //       }
+
+  //     } catch (error) {
+  //       // If it's already a BadRequestException, re-throw it
+  //       if (error instanceof BadRequestException) {
+  //         throw error;
+  //       }
+        
+  //       console.error('Error checking performance for termination:', error);
+  //       throw new BadRequestException(
+  //         'Unable to verify performance data. Cannot create termination request.'
+  //       );
+  //     }
+  //   }
+
+  //   // Employee resignation - always allowed
+  //   if (terminationRequestData.initiator === TerminationInitiation.EMPLOYEE) {
+  //     const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
+  //     const savedRequest = await newTerminationRequest.save();
+
+  //     await this.notificationLogService.sendNotification({
+  //       to: savedRequest.employeeId,
+  //       type: 'Resignation Request Submitted',
+  //       message: 'Your resignation request has been submitted successfully and is pending HR review.',
+  //     });
+
+  //     const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
+  //     if (hrManagers && hrManagers.length > 0) {
+  //       await this.notificationLogService.sendNotification({
+  //         to: hrManagers[0].id,
+  //         type: 'New Resignation Request',
+  //         message: `Employee ${savedRequest.employeeId} has submitted a resignation request. Reason: ${savedRequest.reason}`,
+  //       });
+  //     }
+
+  //     return savedRequest;
+  //   }
+
+  //   throw new BadRequestException('Invalid termination request');
+  // }
+
+ async createTerminationRequest(terminationRequestData: CreateTerminationRequestDto): Promise<TerminationRequestDocument> {
     let shouldCreateRequest = false;
     let performanceIssueDetected = false;
+
+    console.log('===== TERMINATION REQUEST DEBUG =====');
+    console.log('Employee ID:', terminationRequestData.employeeId);
+    console.log('Initiator:', terminationRequestData.initiator);
+    console.log('Reason:', terminationRequestData.reason);
+
+    // Helper function to safely extract ObjectId as string
+    const extractId = (field: any): string => {
+      if (!field) return '';
+      if (typeof field === 'string') return field;
+      if (field._id) return field._id.toString();
+      if (field.toString && typeof field.toString === 'function') return field.toString();
+      return String(field);
+    };
 
     // USER STORY: HR Manager initiates termination based on performance data
     if (terminationRequestData.initiator === TerminationInitiation.HR || 
         terminationRequestData.initiator === TerminationInitiation.MANAGER) {
       
       try {
+        console.log('Fetching employee appraisals...');
+        
         // Get employee's latest appraisal
         const employeeAppraisals = await this.performanceService.getEmployeeAppraisals(
           terminationRequestData.employeeId.toString()
         );
 
+        console.log('Appraisals found:', employeeAppraisals?.length || 0);
+        if (employeeAppraisals && employeeAppraisals.length > 0) {
+          console.log('First appraisal data:', JSON.stringify(employeeAppraisals[0], null, 2));
+        }
+
         if (employeeAppraisals && employeeAppraisals.length > 0) {
           const latestAppraisal = employeeAppraisals[0]; // Most recent
+          
+          console.log('Latest appraisal found');
+          console.log('Template ID:', latestAppraisal.templateId);
+          console.log('Latest Appraisal ID:', latestAppraisal.latestAppraisalId);
+          console.log('Status:', latestAppraisal.status);
 
           if (latestAppraisal.templateId && latestAppraisal.latestAppraisalId) {
+            console.log('Appraisal has both templateId and latestAppraisalId');
+            
+            // Extract IDs safely (handles both populated objects and direct IDs)
+            const templateId = extractId(latestAppraisal.templateId);
+            const appraisalRecordId = extractId(latestAppraisal.latestAppraisalId);
+            
+            console.log('Extracted Template ID:', templateId);
+            console.log('Extracted Appraisal Record ID:', appraisalRecordId);
+            
             // Get the template
+            console.log('Fetching template...');
             const template = await this.performanceService.getAppraisalTemplateById(
-              latestAppraisal.templateId.toString()
+              templateId
             );
+            console.log('Template fetched:', template.name);
+            console.log('Rating Scale:', JSON.stringify(template.ratingScale, null, 2));
 
             // Get the appraisal record
+            console.log('Fetching appraisal record...');
             const appraisalRecord = await this.performanceService.getAppraisalRecordById(
-              latestAppraisal.latestAppraisalId.toString()/*latestAppraisalId.toString()*/
+              appraisalRecordId
             );
+            console.log('Appraisal record fetched');
+            console.log('Total Score:', appraisalRecord.totalScore);
+            console.log('Status:', appraisalRecord.status);
 
             // Check if record exists and has valid data
             if (appraisalRecord && 
@@ -100,47 +264,75 @@ export class OffboardingService {
                 template && 
                 template.ratingScale) {
               
+              console.log('All data is valid');
+              console.log(`Comparing: ${appraisalRecord.totalScore} < ${template.ratingScale.min}?`);
+              
               // Compare score with template minimum
               if (appraisalRecord.totalScore < template.ratingScale.min) {
+                console.log('Performance BELOW minimum - termination ALLOWED');
+                
                 // Performance below minimum - allow termination request creation
                 performanceIssueDetected = true;
                 shouldCreateRequest = true;
 
                 // Create the termination request
+                console.log('Creating termination request...');
                 const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
                 const savedRequest = await newTerminationRequest.save();
+                console.log('Termination request saved:', savedRequest._id);
 
                 // Send performance-related notifications
+                console.log('Sending notification to employee...');
                 await this.notificationLogService.sendNotification({
                   to: newTerminationRequest.employeeId,
                   type: 'Termination Notice - Poor Performance',
                   message: `A termination request has been initiated due to performance below minimum acceptable standards. Your latest appraisal score: ${appraisalRecord.totalScore}/${template.ratingScale.max} (Minimum required: ${template.ratingScale.min}). Reason: ${savedRequest.reason}. Please contact HR immediately.`,
                 });
+                console.log('Employee notification sent');
 
                 // Notify HR
+                console.log('Fetching HR managers...');
                 const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
+                console.log('HR Managers found:', hrManagers?.length || 0);
 
                 if (hrManagers && hrManagers.length > 0) {
+                  console.log('Sending notification to HR...');
                   await this.notificationLogService.sendNotification({
                     to: hrManagers[0].id,
                     type: 'Termination Request - Below Minimum Performance',
                     message: `Termination request created for employee ${savedRequest.employeeId}. Latest appraisal score ${appraisalRecord.totalScore}/${template.ratingScale.max} is below minimum of ${template.ratingScale.min}. Immediate action required.`,
                   });
+                  console.log('HR notification sent');
                 }
 
+                console.log('Termination request process completed successfully');
                 return savedRequest;
               } else {
                 // Performance is acceptable - do not create termination request
+                console.error(`Performance is ACCEPTABLE: ${appraisalRecord.totalScore}/${template.ratingScale.max} >= ${template.ratingScale.min}`);
                 throw new BadRequestException(
                   `Cannot create termination request for performance reasons. Employee's latest appraisal score (${appraisalRecord.totalScore}/${template.ratingScale.max}) meets or exceeds minimum requirements (${template.ratingScale.min}).`
                 );
               }
+            } else {
+              console.error('Invalid data detected:');
+              console.error('  - Has appraisal record:', !!appraisalRecord);
+              console.error('  - Has total score:', appraisalRecord?.totalScore !== undefined);
+              console.error('  - Has template:', !!template);
+              console.error('  - Has rating scale:', !!template?.ratingScale);
             }
+          } else {
+            console.error('Missing templateId or latestAppraisalId:');
+            console.error('  - templateId:', latestAppraisal.templateId);
+            console.error('  - latestAppraisalId:', latestAppraisal.latestAppraisalId);
           }
+        } else {
+          console.error('No appraisals found for employee:', terminationRequestData.employeeId);
         }
 
         // No appraisal data found - cannot create HR/Manager initiated termination
         if (!shouldCreateRequest) {
+          console.error('Termination request NOT allowed - no valid performance data');
           throw new BadRequestException(
             'Cannot create termination request. No performance appraisal data found to justify termination.'
           );
@@ -149,10 +341,11 @@ export class OffboardingService {
       } catch (error) {
         // If it's already a BadRequestException, re-throw it
         if (error instanceof BadRequestException) {
+          console.error('BadRequestException thrown:', error.message);
           throw error;
         }
         
-        console.error('Error checking performance for termination:', error);
+        console.error('Unexpected error checking performance for termination:', error);
         throw new BadRequestException(
           'Unable to verify performance data. Cannot create termination request.'
         );
@@ -161,8 +354,10 @@ export class OffboardingService {
 
     // Employee resignation - always allowed
     if (terminationRequestData.initiator === TerminationInitiation.EMPLOYEE) {
+      console.log('Processing EMPLOYEE resignation...');
       const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
       const savedRequest = await newTerminationRequest.save();
+      console.log('Resignation request saved:', savedRequest._id);
 
       await this.notificationLogService.sendNotification({
         to: savedRequest.employeeId,
@@ -179,11 +374,13 @@ export class OffboardingService {
         });
       }
 
+      console.log('Resignation request completed successfully');
       return savedRequest;
     }
 
-    throw new BadRequestException('Invalid termination request');
-  }
+    console.error('Invalid initiator type:', terminationRequestData.initiator);
+    throw new BadRequestException('Invalid termination initiator');
+}
 
 
   async updateTerminationRequest(id: string, terminationRequestData: UpdateTerminationRequestDto): Promise<TerminationRequestDocument> {
@@ -255,7 +452,7 @@ export class OffboardingService {
     }
 
     //As a System Admin, I want to revoke system and account access upon termination, so security is maintained. Deactivate employee/revoke system access profile using HrAdminService if hr initiated it and if employee is on leave
-     if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
+   //  if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
 
      // const systemAdminUserId = systemAdmins && systemAdmins.length > 0 ? systemAdmins[0].employeeProfileId.toString() : 'SYSTEM';
     
@@ -266,7 +463,7 @@ export class OffboardingService {
       EmployeeStatus.TERMINATED,
       updatedTerminationRequest.terminationDate || new Date(),
     );
-    }
+    //}
 
     // Delete employee profile using EmployeeCrudService if hr initiated it 
     // if (updatedTerminationRequest.initiator === TerminationInitiation.HR)
@@ -279,16 +476,18 @@ export class OffboardingService {
     // Find the approved exit benefits template from payroll configuration
     const approvedExitBenefitTemplate = await this.exitBenefitsConfigModel.findOne({ status: ConfigStatus.APPROVED }).exec();
 
-    if (!approvedExitBenefitTemplate) throw new NotFoundException('cannot find benefit template') ;
+   
+ if (!approvedExitBenefitTemplate) throw new NotFoundException('cannot find benefit template') ;
         
       // Create the employee-specific exit benefits record in payroll execution
       const exitBenefitsRecord = new this.exitBenefitsModel({
-        employeeId: updatedTerminationRequest.employeeId,
-        benefitId: approvedExitBenefitTemplate._id, 
-        terminationId: updatedTerminationRequest._id,
-        status: BenefitStatus.PENDING,
-      });
-
+      employeeId: updatedTerminationRequest.employeeId,
+      benefitId: approvedExitBenefitTemplate._id,
+      terminationId: updatedTerminationRequest._id,  
+      givenAmount: approvedExitBenefitTemplate.amount || 0,  
+      status: BenefitStatus.PENDING,
+      createdAt: new Date(),
+    });
       await exitBenefitsRecord.save();
       
       const payrollManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.PAYROLL_MANAGER);
@@ -319,6 +518,23 @@ async getAllTerminationRequests(employeeId?: string): Promise<TerminationRequest
     const filter = employeeId ? { employeeId } : {};
     return this.terminationRequestModel.find(filter).exec();
   }
+
+ async getTerminationRequestByEmployeeId(
+    employeeId: string,
+  ): Promise<TerminationRequestDocument> {
+    const terminationRequest = await this.terminationRequestModel
+      .findOne({ employeeId })
+      .exec();
+
+    if (!terminationRequest) {
+      throw new NotFoundException(
+        'Termination request not found for this employee',
+      );
+    }
+
+    return terminationRequest;
+  }
+
 
   async getTerminationRequest(id: string): Promise<TerminationRequestDocument> {
     const terminationRequest = await this.terminationRequestModel.findById(id).exec();

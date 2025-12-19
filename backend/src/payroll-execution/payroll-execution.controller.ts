@@ -38,6 +38,7 @@ import {
 
 import { PayrollPhase4Service } from './payroll-phase4.service';
 import { GeneratePayslipsDto } from './dto/generate-payslips.dto';
+import { CreatePayrollRunDto } from './dto/create-payroll-run.dto';
 
 // SECURITY
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -58,6 +59,50 @@ export class PayrollExecutionController {
     private readonly phase3Service: PayrollPhase3Service,
     private readonly phase4Service: PayrollPhase4Service,
   ) {}
+
+  // ======================================================
+  // DATA FETCHING ENDPOINTS
+  // ======================================================
+
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER, SystemRole.FINANCE_STAFF)
+  @Get('runs')
+  getAllPayrollRuns() {
+    return this.payrollExecutionService.getAllPayrollRuns();
+  }
+
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Post('runs')
+  createRun(@Body() dto: CreatePayrollRunDto) {
+    return this.payrollExecutionService.createPayrollRun(dto);
+  }
+
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER, SystemRole.FINANCE_STAFF)
+  @Get('runs/:id')
+  getPayrollRunById(@Param('id') id: string) {
+    return this.payrollExecutionService.getPayrollRunById(id);
+  }
+
+  @Roles(
+    SystemRole.PAYROLL_SPECIALIST,
+    SystemRole.PAYROLL_MANAGER,
+    SystemRole.FINANCE_STAFF,
+  )
+  @Get('runs/:runId/employees')
+  getEmployeesByRunId(@Param('runId') runId: string) {
+    return this.payrollExecutionService.getEmployeesByRunId(runId);
+  }
+
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Get('signing-bonuses')
+  getAllSigningBonuses() {
+    return this.payrollExecutionService.getAllSigningBonuses();
+  }
+
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Get('exit-benefits')
+  getAllExitBenefits() {
+    return this.payrollExecutionService.getAllExitBenefits();
+  }
 
   // ======================================================
   // PHASE 0 — SIGNING BONUS (Payroll Specialist)
@@ -215,5 +260,16 @@ export class PayrollExecutionController {
   @Post('generate-payslips')
   generatePayslips(@Body() dto: GeneratePayslipsDto) {
     return this.phase4Service.generatePayslips(dto);
+  }
+
+  // Expose payslips by runId for viewing/exporting
+  @Roles(
+    SystemRole.PAYROLL_SPECIALIST,
+    SystemRole.PAYROLL_MANAGER,
+    SystemRole.FINANCE_STAFF,
+  )
+  @Get('runs/:runId/payslips')
+  getPayslipsByRunId(@Param('runId') runId: string) {
+    return this.payrollExecutionService.getPayslipsByRunId(runId);
   }
 }

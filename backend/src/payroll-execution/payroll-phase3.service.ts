@@ -19,13 +19,19 @@ export class PayrollPhase3Service {
 
   // 1. Review draft by Payroll Specialist (optional read-only, can be skipped if already done)
     async reviewPayrollRun(payrollRunId: string) {
-    const run = await this.payrollRunsModel.findById(payrollRunId);
+    let run = await this.payrollRunsModel.findOne({ runId: payrollRunId });
+    if (!run && Types.ObjectId.isValid(payrollRunId)) {
+      run = await this.payrollRunsModel.findById(payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
     return run;
   }
   
   async managerApprove(dto: PayrollApproveDto) {
-    const run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    let run = await this.payrollRunsModel.findOne({ runId: dto.payrollRunId });
+    if (!run && Types.ObjectId.isValid(dto.payrollRunId)) {
+      run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
 
 //     // Check if the user has PAYROLL_MANAGER role
@@ -57,7 +63,10 @@ export class PayrollPhase3Service {
   }
 
     async financeApprove(dto: PayrollApproveDto) {
-    const run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    let run = await this.payrollRunsModel.findOne({ runId: dto.payrollRunId });
+    if (!run && Types.ObjectId.isValid(dto.payrollRunId)) {
+      run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
 
     if (run.status !== PayRollStatus.PENDING_FINANCE_APPROVAL)
@@ -73,7 +82,10 @@ export class PayrollPhase3Service {
     }
 
     async lockPayroll(dto: LockPayrollDto) {
-    const run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    let run = await this.payrollRunsModel.findOne({ runId: dto.payrollRunId });
+    if (!run && Types.ObjectId.isValid(dto.payrollRunId)) {
+      run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
     if (run.status !== PayRollStatus.APPROVED)
         throw new BadRequestException('Payroll must be APPROVED before locking.');
@@ -86,7 +98,10 @@ export class PayrollPhase3Service {
     }
 
     async unfreezePayroll(dto: UnfreezePayrollDto) {
-    const run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    let run = await this.payrollRunsModel.findOne({ runId: dto.payrollRunId });
+    if (!run && Types.ObjectId.isValid(dto.payrollRunId)) {
+      run = await this.payrollRunsModel.findById(dto.payrollRunId);
+    }
     if (!run) throw new BadRequestException('Payroll run not found.');
     if (run.status !== PayRollStatus.LOCKED)
         throw new BadRequestException('Only LOCKED payroll can be unfrozen.');

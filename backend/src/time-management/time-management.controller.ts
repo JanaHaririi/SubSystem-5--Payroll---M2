@@ -1,5 +1,5 @@
 import { NotificationLogService } from './services/notification-log.service';
-import { Controller, Post, Body, Delete, Param, Get, Put, Patch, BadRequestException, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Delete, Param, Get, Put, Patch, BadRequestException, Query, UseGuards, Req } from '@nestjs/common';
 import { ShiftAssignmentService } from './services/shift-assignment.service';
 import { ScheduleRuleService } from './services/schedule-rule.service';
 import { AttendanceCorrectionRequestService } from './services/attendance-correction-request.service';
@@ -34,6 +34,7 @@ import { UpdateAttendanceRecordDto } from './dtos/update-attendance-record-dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('time-management')
 export class TimeManagementController {
@@ -52,71 +53,76 @@ export class TimeManagementController {
     ){}
 
     // Shift Assignment Functions (DONE - Authorization)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Post('assign-shift') //sys admin, hr admin
     async assignShift(@Body() assignData: ShiftAssignmentCreateDto) {
         return await this.shiftAssignmentService.assignShift(assignData);
     }
     
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Get('assign-shift') //sys admin, hr admin
     async getAllShiftAssignments(){
         return await this.shiftAssignmentService.getAllShiftAssignments() 
     }
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Get('assign-shift/expiring') //sys admin, hr admin
     async detectUpcomingExpiry(){
         return await this.shiftAssignmentService.detectUpcomingExpiry()
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Get('assign-shift/:id') //sys admin, hr admin
     async getShiftAssignmentById(@Param('id')shiftAssignmentId:string){
         return await this.shiftAssignmentService.getShiftAssignmentById(shiftAssignmentId)
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Put('assign-shift/:id') //sys admin, hr admin
     async updateShiftAssignment(@Param('id')shiftAssignmentId:string, @Body()status:ShiftAssignmentStatus){
         return await this.shiftAssignmentService.updateShiftAssignment(status,shiftAssignmentId)
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Put('assign-shift/extend/:id') //sys admin, hr admin
     async extendShiftAssignment(@Param('id')shiftAssignmentId:string,@Body()dto:ShiftAssignmentUpdateDto){
         return await this.shiftAssignmentService.extendShiftAssignment(dto,shiftAssignmentId)
     }
 
+    @UseGuards(AuthGuard, RolesGuard)
+    @Get('shift-assignment/employee/:id')
+    async getEmployeeShift(@Param('id') employeeId: string){
+    return await this.shiftAssignmentService.getEmployeeShift(employeeId);
+    }
+
     // Notification Log Functions (kol da hr admin)
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_ADMIN)
     @Post('notification-log') 
     async sendNotification(@Body()notifData:NotificationLogCreateDto){
         return this.notificationLogService.sendNotification(notifData);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_ADMIN)
     @Get('notification-log') 
     async getAllNotifications(){
         return this.notificationLogService.getAllNotifications()
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Get('notification-log/:notifId')
     async getNotificationbyId(@Param('notifId')notifId:string){
         return this.notificationLogService.getNotificationById(notifId)
     }
 
     @UseGuards(AuthGuard)
-    @Roles(SystemRole.HR_ADMIN)
     @Get('notification-log/employee/:id') 
     async getEmployeeNotifications(@Param('id') employeeId:string){
         return this.notificationLogService.getEmployeeNotifications(employeeId)
@@ -124,8 +130,8 @@ export class TimeManagementController {
 
 
     // Schedule Rule Functions
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.HR_ADMIN)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
     @Post('schedule-rule') // hr manager
     async createScheduleRule(@Body() dto: ScheduleRuleCreateDto) {
         const createdRule = await this.scheduleRuleService.createScheduleRule(dto);
@@ -137,7 +143,7 @@ export class TimeManagementController {
     }
 
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
     @Get('schedule-rule') //sys admin (read-only), hr manager, employees (read-only)
     async getAllScheduleRules() {
@@ -148,7 +154,7 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
     @Get('schedule-rule/:id') //sys admin (read-only) , hr manager, employees (read-only)
     async getScheduleRuleById(@Param('id') id: string) {
@@ -159,7 +165,7 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Patch('schedule-rule/:id') //sys admin (read only), hr manager
     async updateScheduleRule(@Param('id') id: string, @Body() dto: ScheduleRuleUpdateDto) {
@@ -171,7 +177,7 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Delete('schedule-rule/:id') //sys admin (read only), hr manager
     async deleteScheduleRule(@Param('id') id: string) {
@@ -180,8 +186,16 @@ export class TimeManagementController {
     }
 
     // Attendance Record Functions
-
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+    @Get('attendance-record') // Get all records with filters
+    async getAllAttendanceRecords(
+    @Query('employeeId') employeeId?: string
+    ) {
+    return this.attendanceRecordService.getAllAttendanceRecords(employeeId);
+    }
+    
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
     @Post('attendance-record/clock-in') // employee
     async recordClockIn(@Body() dto: CreateAttendancePunchDto) {
@@ -189,31 +203,29 @@ export class TimeManagementController {
     }
 
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE,)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Post('attendance-record/clock-out') // employee
     async recordClockOut(@Body() dto: CreateAttendancePunchDto) {
         return this.attendanceRecordService.recordClockOut(dto);
     }
 
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.DEPARTMENT_HEAD, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Get('attendance-record/:employeeId/missed-punches') // employee, line manager, payroll officer
     async detectMissedPunches(@Param('employeeId') employeeId: string) {
-        return this.attendanceRecordService.detectMissedPunches(employeeId);
+       return this.attendanceRecordService.detectMissedPunches(employeeId);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.DEPARTMENT_HEAD, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST, SystemRole.SYSTEM_ADMIN)
     @Get('attendance-record/:employeeId') // employee, line manager, payroll officer, sys admin
     async listAttendanceForEmployee(
-        @Param('employeeId') employeeId: string,
-        @Query('startDate') startDate?: string,
-        @Query('endDate') endDate?: string
+        @Param('employeeId') employeeId: string
     ) {
-        return this.attendanceRecordService.listAttendanceForEmployee(employeeId, startDate, endDate);
+        return this.attendanceRecordService.listAttendanceForEmployee(employeeId); 
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.SYSTEM_ADMIN)
     @Patch('attendance-record/:employeeId/punch') // employee, sys admin
     async updatePunchByTime(
@@ -224,7 +236,7 @@ export class TimeManagementController {
         return this.attendanceRecordService.updatePunchByTime(employeeId, punchTime, update);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.SYSTEM_ADMIN)
     @Delete('attendance-record/:employeeId/punch') // employee, sys admin
     async deletePunchByTime(
@@ -234,7 +246,7 @@ export class TimeManagementController {
         return this.attendanceRecordService.deletePunchByTime(employeeId, punchTime);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.SYSTEM_ADMIN)
     @Delete('attendance-record/:employeeId/punches') // line manager, sys admin
     async deletePunchesForDate(
@@ -244,29 +256,44 @@ export class TimeManagementController {
         return this.attendanceRecordService.deletePunchesForDate(employeeId, date);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.DEPARTMENT_HEAD)
     @Post('attendance-record') // line manager
     async createAttendanceRecord(@Body() dto: CreateAttendanceRecordDto) {
         return this.attendanceRecordService.createAttendanceRecord(dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.DEPARTMENT_HEAD)
     @Patch('attendance-record/:id') // line manager
     async updateAttendanceRecord(@Param('id') id: string, @Body() dto: UpdateAttendanceRecordDto) {
         return this.attendanceRecordService.updateAttendanceRecord(id, dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Get('attendance-record/:employeeId/repeated-lateness') // hr manager
     async flagRepeatedLateness(@Param('employeeId') employeeId: string) {
-        return this.attendanceRecordService.flagRepeatedLateness(employeeId);
+      return this.attendanceRecordService.flagRepeatedLateness(employeeId);
+    }
+
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+    @Get('attendance-record/record/:id')
+    async getAttendanceRecordById(@Param('id') id: string) {
+    return this.attendanceRecordService.getAttendanceRecordById(id);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.SYSTEM_ADMIN)
+    @Delete('attendance-record/record/:id')
+    async deleteAttendanceRecord(@Param('id') id: string) {
+    return this.attendanceRecordService.deleteAttendanceRecord(id);
     }
 
     // Attendance Correction Request Functions
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
     @Post('attendance-correction-request') // employee
     async submitCorrectionRequest(@Body() dto: AttendanceCorrectionRequestDto) {
@@ -278,20 +305,23 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
-    @Patch('attendance-correction-request/:id') // sys admin, hr admin, line manager
-    async updateCorrectionRequest(@Param('id') id: string, @Body() dto: UpdateAttendanceCorrectionRequestDto) {
-        const result = await this.attendanceCorrectionRequestService.updateCorrectionRequest(id, dto);
-        return {
-            success: true,
-            message: 'Correction request updated successfully!',
-            data: result
+   
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
+    @Patch('attendance-correction-request/:id/escalate') // HR manager, HR admin, sys admin
+    async escalateRequest(@Param('id') id: string) {
+    const result = await this.attendanceCorrectionRequestService.escalateCorrectionRequest(id);
+    return {
+        success: true,
+        message: 'Correction request escalated successfully!',
+        data: result
         };
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
     @Patch('attendance-correction-request/:id/approve') // sys admin, hr admin
     async approveCorrectionRequest(@Param('id') id: string) {
         const result = await this.attendanceCorrectionRequestService.approveCorrectionRequest(id);
@@ -302,8 +332,8 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
     @Patch('attendance-correction-request/:id/reject') // sys admin, hr admin
     async rejectCorrectionRequest(@Param('id') id: string, @Body('reason') reason: string) {
         if (!reason) throw new BadRequestException('Rejection reason is required.');
@@ -315,7 +345,7 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
     @Get('attendance-correction-request/employee/:employeeId') // employee
     async listEmployeeRequests(@Param('employeeId') employeeId: string) {
@@ -327,8 +357,8 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Post('attendance-correction-request/auto-escalate') // sys admin, hr admin
     async autoEscalate() {
         const result = await this.attendanceCorrectionRequestService.autoEscalatePendingCorrections();
@@ -338,9 +368,18 @@ export class TimeManagementController {
             data: result
         };
     }
+    
+    @UseGuards(AuthGuard, RolesGuard)
+    @Get('attendance-correction-request')
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+    async getAllCorrectionRequests() {
+    return this.attendanceCorrectionRequestService.getAllCorrectionRequests();
+    }
+
+
 
     // Holiday Functions
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
     @Post('holiday') // hr manager, employee read only, sys admin, hr admin
     async createHoliday(@Body() dto: CreateHolidayDto) {
@@ -352,7 +391,7 @@ export class TimeManagementController {
         };
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Get('holiday') // hr manager, employee , sys admin , hr admin
     async getAllHolidays() {
         const result = await this.holidayService.getAllHolidays();
@@ -364,28 +403,28 @@ export class TimeManagementController {
     }
 
     // Shift Type Functions
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Post('shift-type') //sys admin, hr manager
     async createShiftType(@Body()shiftTypeData:ShiftTypeCreateDto){
         return this.shiftTypeService.createShiftType(shiftTypeData);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
     @Get('shift-type') //sys admin, hr manager, employees (read-only)
     async getAllShiftTypes(){
         return this.shiftTypeService.getAllShiftTypes();
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
     @Get('shift-type/:id') //sys admin, hr manager, employees (read-only)
     async getShiftTypeById(@Param('id')shiftTypeId:string){
         return this.shiftTypeService.getShiftTypeById(shiftTypeId)
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER)
     @Delete('shift-type/:id') //sys admin, hr manager
     async deleteShiftType(@Param('id')shiftTypeId:string){
@@ -393,42 +432,42 @@ export class TimeManagementController {
     }
 
     // Shift Functions (sys admin, hr admin)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Post('shift') 
     async createShift(@Body()shiftData:ShiftCreateDto){
         return this.shiftService.createShift(shiftData)
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Get('shift') // sys admin, hr admin, employees (read-only)
     async getAllShifts(){
         return this.shiftService.getAllShifts()
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Get('shift/:id') // sys admin, hr admin, employees (read-only)
     async getShiftById(@Param('id')shiftId:string){
         return this.shiftService.getShiftById(shiftId)
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Put('shift/deactivate/:id') 
     async deactivateShift(@Param('id')shiftId:string){
         return this.shiftService.deactivateShift(shiftId) // sys admin, hr admin
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Put('shift/activate/:id') 
     async activateShift(@Param('id')shiftId:string){
         return this.shiftService.activateShit(shiftId) // sys admin, hr admin
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
     @Delete('shift/:id') 
     async deleteShift(@Param('id')shiftId:string){
@@ -436,43 +475,91 @@ export class TimeManagementController {
     }
 
     // Time Exception Functions
-   @UseGuards(AuthGuard)
-   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN)
+   @UseGuards(AuthGuard, RolesGuard)
+   @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
+   @Post('time-exception') 
+   async createTimeException(@Body() dto: TimeExceptionCreateDto) {
+       return this.timeExceptionService.create(dto);
+   }
+
+  
+
+   @UseGuards(AuthGuard, RolesGuard)
+   @Roles( SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
    @Patch('time-exception/:id/approve') // line manager, hr admin
-    async approveTimeException(@Param('id') id: string, @Body('approvedBy') approvedBy: string) {
-        return this.timeExceptionService.approve(id, approvedBy);
+    async approveTimeException(@Param('id') id: string, @Req() req) {
+        const approverId = req.user.id;
+        return this.timeExceptionService.approve(id, approverId);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles( SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Patch('time-exception/:id/reject') // line manager, hr admin
-    async rejectTimeException(@Param('id') id: string, @Body('rejectedBy') rejectedBy: string, @Body('reason') reason: string) {
-        return this.timeExceptionService.reject(id, rejectedBy, reason);
+    async rejectTimeException(@Param('id') id: string, @Body('reason') reason: string, @Req() req) {
+        const approverId = req.user.id;
+        return this.timeExceptionService.reject(id, approverId, reason);
+    }
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN)
+    @Patch('time-exception/:id/open') // line manager, hr admin
+    async openTimeException(@Param('id') id: string, @Req() req) {
+        const approverId = req.user.id;
+        return this.timeExceptionService.open(id, approverId);
     }
 
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD) // hr manager
+    @Patch('time-exception/:id/escalate')
+    async escalateTimeException(@Param('id') id: string) {
+        return this.timeExceptionService.escalate(id);
+    }
+
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
+    @Get('time-exception/my-exceptions/:id')
+    async listMyTimeExceptions(@Param("id") employeeId:string) {
+        return this.timeExceptionService.listEmployeeTimeExceptions(employeeId);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+    @Get('time-exception')
+    async getAllTimeExceptions() {
+        return this.timeExceptionService.getAllTimeExceptions();
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Post('time-exception/auto-escalate') // line manager, hr admin
     async autoEscalateTimeExceptions() {
         return this.timeExceptionService.autoEscalatePending();
     }
 
     // Overtime Rule Functions
-    @UseGuards(AuthGuard)
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
+    @Get('overtime-rule')
+    async listOvertimeRules(){
+        return this.overtimeRuleService.listOvertimeRules()
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Post('overtime-rule') // hr manager
     async createOvertimeRule(@Body() dto: OvertimeRuleCreateDto) {
         return this.overtimeRuleService.createOvertimeRule(dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Patch('overtime-rule/:id') // hr manager
     async updateOvertimeRule(@Param('id') id: string, @Body() dto: OvertimeRuleUpdateDto) {
         return this.overtimeRuleService.updateOvertimeRule(id, dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Delete('overtime-rule/:id') //hr manager
     async deleteOvertimeRule(@Param('id') id: string) {
@@ -480,35 +567,35 @@ export class TimeManagementController {
     }
 
     // Lateness Rule Functions
-    @UseGuards(AuthGuard)
-    @Roles(SystemRole.HR_MANAGER)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_MANAGER)
     @Post('lateness-rule') // hr manager
     async createLatenessRule(@Body() dto: LatenessRuleCreateDto) {
         return this.latenessRuleService.createLatenessRule(dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
     @Get('lateness-rule') // hr manager, sys admin and employees (read-only)
     async getAllLatenessRules() {
         return this.latenessRuleService.listLatenessRules();
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
     @Get('lateness-rule/:id') // hr manager, sys admins and employees (read-only)
     async getLatenessRuleById(@Param('id') id: string) {
         return this.latenessRuleService.findById(id);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Patch('lateness-rule/:id') // hr manager
     async updateLatenessRule(@Param('id') id: string, @Body() dto: LatenessRuleUpdateDto) {
         return this.latenessRuleService.updateLatenessRule(id, dto);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(SystemRole.HR_MANAGER)
     @Delete('lateness-rule/:id') // hr manager
     async deleteLatenessRule(@Param('id') id: string) {

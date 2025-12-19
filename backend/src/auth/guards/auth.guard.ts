@@ -29,6 +29,7 @@ export class AuthGuard implements CanActivate {
           candidateNumber: payload.candidateNumber,
           email: payload.email,
           status: payload.status,
+          roles: payload.roles || ['candidate'] // not including the role caused issue in detecting the candidate role in gaurds
         };
       } else {
         // Employee login - BR-3j: Check employee status

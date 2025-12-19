@@ -26,7 +26,13 @@ export class OvertimeRuleService {
   }
  
   async listOvertimeRules() {
-    return this.overtimeRuleModel.find();
+    const rules = await this.overtimeRuleModel.find();
+    if(!rules) throw new NotFoundException("Overtime rules not found!");
+    return{
+      message:"Overtime rules returned!",
+      success:true,
+      data:rules
+    }
   }
 
    

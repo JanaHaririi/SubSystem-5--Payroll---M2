@@ -27,11 +27,11 @@ export class editInsuranceBracketsDTO {
 
   @IsNumber()
   @IsOptional()
-  EmployeeRate?: number;
+  employeeRate?: number;
 
   @IsNumber()
   @IsOptional()
-  EmployerRate?: number;
+  employerRate?: number;
 }
 
 

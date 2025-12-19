@@ -11,6 +11,7 @@ import { AuthGuard } from '../../auth/guards/auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
+import { Public } from 'src/payroll-tracking/decorators/public.decorator';
 
 @Controller('onboarding')
 @UseGuards(AuthGuard, RolesGuard)
@@ -24,9 +25,15 @@ export class OnboardingController {
   async getAllContracts() {
     return this.onboardingService.getAllContracts();
   }
+  
+  @Get('contracts/by-offer/:offerId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE ,  SystemRole.JOB_CANDIDATE)
+  async getContractByOfferId(@Param('offerId') offerId: string) {
+    return this.onboardingService.getContractByOfferId(offerId);
+  }
 
   @Get('contracts/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
   async getContract(@Param('id') id: string) {
     return this.onboardingService.getContractById(id);
   }
@@ -38,77 +45,79 @@ export class OnboardingController {
   }
 
   @Patch('contracts/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   async updateContract(@Param('id') id: string, @Body() dto: UpdateContractDto) {
     return this.onboardingService.updateContract(id, dto);
   }
 
-  // Document related controller functions
+// Document related controller functions
 
-  @Get('documents')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
-  async getAllDocuments() {
-    return this.onboardingService.getAllOnboardingDocuments();
-  }
+@Get('documents')
+@Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+async getAllDocuments() {
+  return this.onboardingService.getAllOnboardingDocuments();
+}
 
-  @Get('documents/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
-  async getDocument(@Param('id') id: string) {
-    return this.onboardingService.getOnboardingDocument(id);
-  }
+@Get('documents/:ownerId')
+@Roles(SystemRole.HR_MANAGER,SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE, SystemRole.DEPARTMENT_EMPLOYEE)
+async getDocumentsByOwner(@Param('ownerId') ownerId: string) {
+  return this.onboardingService.getDocumentsByOwner(ownerId);
+}
 
-  @Get('documents/candidate/:candidateId')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
-  async getDocumentsByCandidate(@Param('candidateId') candidateId: string) {
-    return this.onboardingService.getDocumentsByCandidate(candidateId);
-  }
-
-  @Get('documents/employee/:employeeId')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
-  async getDocumentsByEmployee(@Param('employeeId') employeeId: string) {
-    return this.onboardingService.getDocumentsByEmployee(employeeId);
-  }
+@Get('documents/:id')
+@Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE ,SystemRole.DEPARTMENT_EMPLOYEE )
+async getDocument(@Param('id') id: string) {
+  return this.onboardingService.getOnboardingDocument(id);
+}
 
   @Post('documents')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  //@Public()
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE ,SystemRole.JOB_CANDIDATE)
   async createDocument(@Body() dto: CreateOnboardingDocumentDto) {
     return this.onboardingService.createOnboardingDocument(dto);
   }
 
   @Patch('documents/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE ,SystemRole.JOB_CANDIDATE)
   async updateDocument(@Param('id') id: string, @Body() dto: UpdateOnboardingDocumentDto) {
     return this.onboardingService.updateOnboardingDocument(id, dto);
   }
 
   @Delete('documents/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE , SystemRole.DEPARTMENT_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   async deleteDocument(@Param('id') id: string) {
     return this.onboardingService.deleteOnboardingDocument(id);
   }
 
   // Onboarding task related controller functions
-
   @Get('tasks')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   async getAllTasks() {
     return this.onboardingService.getAllTasks();
   }
+  
+  @Get('tasks/employee/:employeeId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE , SystemRole.DEPARTMENT_EMPLOYEE)
+  async getTasksByEmployeeId(
+    @Param('employeeId') employeeId: string,
+  ) {
+    return this.onboardingService.getTasksByEmployeeId(employeeId);
+  }
 
   @Get('tasks/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE ,SystemRole.DEPARTMENT_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   async getTask(@Param('id') id: string) {
     return this.onboardingService.getTaskById(id);
   }
 
   @Post('tasks')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER)
   async createTask(@Body() dto: CreateOnboardingTaskDto) {
     return this.onboardingService.createOnboardingTask(dto);
   }
 
   @Patch('tasks/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.JOB_CANDIDATE)
   async updateTask(@Param('id') id: string, @Body() dto: UpdateOnboardingTaskDto) {
     return this.onboardingService.updateOnboardingTask(id, dto);
   }

@@ -181,18 +181,74 @@ export class PerformanceService {
             throw new NotFoundException('Invalid cycle ID');
         }
 
-        return await this.appraisalAssignmentModel
-            .find({ cycleId })
-            .populate('employeeProfileId', 'firstName lastName position')
-            .populate('managerProfileId', 'firstName lastName')
-            .populate('templateId', 'name templateType')
-            .populate('departmentId', 'name')
+        // Get assignments without populate first to avoid casting errors
+        const assignments = await this.appraisalAssignmentModel
+            .find({
+                cycleId,
+                templateId: { $ne: '<templateId>' } // Exclude placeholder values
+            })
+            .lean()
             .exec();
+
+        // Manually populate the references with validation
+        for (const assignment of assignments) {
+            try {
+                if (assignment.employeeProfileId && Types.ObjectId.isValid(assignment.employeeProfileId)) {
+                    (assignment as any).employeeProfileId = await this.employeeProfileModel
+                        .findById(assignment.employeeProfileId)
+                        .select('firstName lastName employeeNumber primaryPositionId')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate employeeProfileId:', err.message);
+            }
+
+            try {
+                if (assignment.managerProfileId && Types.ObjectId.isValid(assignment.managerProfileId)) {
+                    (assignment as any).managerProfileId = await this.employeeProfileModel
+                        .findById(assignment.managerProfileId)
+                        .select('firstName lastName employeeNumber')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate managerProfileId:', err.message);
+            }
+
+            try {
+                if (assignment.templateId && Types.ObjectId.isValid(assignment.templateId)) {
+                    (assignment as any).templateId = await this.appraisalTemplateModel
+                        .findById(assignment.templateId)
+                        .select('name templateType')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate templateId:', err.message);
+            }
+
+            try {
+                if (assignment.departmentId && Types.ObjectId.isValid(assignment.departmentId)) {
+                    (assignment as any).departmentId = await this.departmentModel
+                        .findById(assignment.departmentId)
+                        .select('name')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate departmentId:', err.message);
+            }
+        }
+
+        return assignments as any;
     }
     
 
     // Appraisal Assignment Methods
     async createAppraisalAssignments(cycleId: string) {
+        console.log("📆 Appraisal cycle assignment started:", cycleId);
+
         if (!Types.ObjectId.isValid(cycleId)) {
             throw new NotFoundException('Invalid cycle ID');
         }
@@ -202,48 +258,111 @@ export class PerformanceService {
             .exec();
 
         if (!cycle) {
+            console.error("❌ ERROR: Appraisal cycle not found");
             throw new NotFoundException('Appraisal cycle not found');
         }
 
+        console.log("📋 Cycle:", cycle.name);
+
         if (!cycle.templateAssignments || cycle.templateAssignments.length === 0) {
+            console.error("❌ ERROR: Cycle has no template assignments");
             throw new BadRequestException('Cycle has no template assignments');
         }
 
         // ⭐ Pull required fields from cycle so we satisfy schema
         const templateId = cycle.templateAssignments[0].templateId;
-        const departmentId = cycle.templateAssignments[0].departmentIds[0];
+        const departmentIds = cycle.templateAssignments[0].departmentIds;
+
+        console.log("📁 Cycle departments:", departmentIds);
+        console.log("📋 Template ID:", templateId);
 
         const createdAssignments: AppraisalAssignmentDocument[] = [];
+        let skippedCount = 0;
 
-        // Fetch ALL employees
+        // Fetch employees in the specified departments
         const EmployeeProfileModel = this.appraisalAssignmentModel.db.model('EmployeeProfile');
-        const employees = await EmployeeProfileModel.find({});
+        const PositionModel = this.appraisalAssignmentModel.db.model('Position');
+
+        // Filter employees by departments in the cycle
+        const employees = await EmployeeProfileModel.find({
+            primaryDepartmentId: { $in: departmentIds },
+            status: 'ACTIVE'
+        }).exec();
+
+        console.log("👥 Employees in specified departments:", employees.length);
 
         for (const emp of employees) {
+            console.log("👤 Employee:", emp._id);
+            console.log("📌 Employee supervisorPositionId:", emp.supervisorPositionId);
+            console.log("📌 Employee departmentId:", emp.primaryDepartmentId);
+            console.log("📌 Employee positionId:", emp.primaryPositionId);
+
             const existing = await this.appraisalAssignmentModel.findOne({
-            cycleId,
-            employeeProfileId: emp._id,
+                cycleId,
+                employeeProfileId: emp._id,
             });
 
-            if (existing) continue;
+            if (existing) {
+                console.log("⏭️ Skipping - assignment already exists");
+                continue;
+            }
+
+            // 👔 Resolve manager for this employee
+            console.log("👔 Resolving manager for employee");
+            let managerProfileId = null;
+
+            if (emp.supervisorPositionId) {
+                // Find manager who holds the supervisor position
+                const manager = await EmployeeProfileModel.findOne({
+                    primaryPositionId: emp.supervisorPositionId,
+                    status: 'ACTIVE'
+                }).exec();
+
+                if (manager) {
+                    managerProfileId = manager._id;
+                    console.log("👔 Manager found:", manager._id);
+                    console.log("👔 Manager primaryPositionId:", manager.primaryPositionId);
+                } else {
+                    console.warn("⚠️ SKIPPING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
+                    console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                    console.warn("   This position may be vacant or the employee may not be ACTIVE");
+                    console.warn("   Cannot create assignment - manager is required");
+                    skippedCount++;
+                    continue;
+                }
+            } else {
+                console.warn("⚠️ SKIPPING: Employee has NO supervisorPositionId set");
+                console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                console.warn("   Department:", emp.primaryDepartmentId);
+                console.warn("   Position:", emp.primaryPositionId);
+                console.warn("   Cannot create assignment - manager is required");
+                skippedCount++;
+                continue;
+            }
+
+            console.log("📝 Creating appraisal assignment:", {
+                employeeProfileId: emp._id,
+                managerProfileId,
+                departmentId: emp.primaryDepartmentId,
+                positionId: emp.primaryPositionId,
+                cycleId,
+                templateId,
+            });
 
             const newAssignment = new this.appraisalAssignmentModel({
-            cycleId,
-            templateId,       // ⭐ REQUIRED
-            employeeProfileId: emp._id,
-            
-            // ⭐ Your DB has no supervisor hierarchy → use employee as own manager
-            managerProfileId: emp._id,
-
-            // ⭐ REQUIRED and must match cycle's department
-            departmentId,
-
-            status: AppraisalAssignmentStatus.NOT_STARTED,
-            assignedAt: new Date(),
+                cycleId,
+                templateId,
+                employeeProfileId: emp._id,
+                managerProfileId,
+                departmentId: emp.primaryDepartmentId,
+                positionId: emp.primaryPositionId,
+                status: AppraisalAssignmentStatus.NOT_STARTED,
+                assignedAt: new Date(),
             });
 
             const saved = await newAssignment.save();
             createdAssignments.push(saved);
+            console.log("✅ Assignment created:", saved._id);
 
             // Send notification to employee about new assignment
             await this.notificationLogService.sendNotification({
@@ -253,6 +372,13 @@ export class PerformanceService {
             });
         }
 
+        console.log("📊 Total assignments created:", createdAssignments.length);
+        if (createdAssignments.length === 0) {
+            console.warn("⚠️ No assignments created — check departments list and employee filtering rules");
+        }
+
+        console.log(`✅ Created ${createdAssignments.length} assignments`);
+        console.log(`⚠️ Skipped ${skippedCount} employees without managers`);
         return createdAssignments;
     }
 
@@ -265,29 +391,182 @@ export class PerformanceService {
             throw new NotFoundException('Invalid employee profile ID');
         }
 
-        return await this.appraisalAssignmentModel
-        .find({ employeeProfileId })
-        .populate('cycleId', 'name cycleType startDate endDate status')
-        .populate('templateId', 'name templateType')
-        .populate('managerProfileId', 'firstName lastName')
-        .populate('departmentId', 'name')
+        console.log('🔍 getEmployeeAppraisals called with:', employeeProfileId);
+        console.log('   Type:', typeof employeeProfileId);
+
+        const results = await this.appraisalAssignmentModel
+        .find({ employeeProfileId: new Types.ObjectId(employeeProfileId) })
+        .lean()
         .sort({ assignedAt: -1 })
         .exec();
+
+        console.log('📊 Found assignments:', results.length);
+
+        // Manually populate the references
+        for (const assignment of results) {
+            try {
+                if (assignment.cycleId && Types.ObjectId.isValid(assignment.cycleId)) {
+                    (assignment as any).cycleId = await this.appraisalCycleModel.findById(assignment.cycleId).select('name cycleType startDate endDate status').lean().exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate cycleId:', err.message);
+            }
+
+            try {
+                if (assignment.templateId && Types.ObjectId.isValid(assignment.templateId)) {
+                    (assignment as any).templateId = await this.appraisalTemplateModel.findById(assignment.templateId).select('name templateType').lean().exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate templateId:', err.message);
+            }
+
+            try {
+                if (assignment.managerProfileId && Types.ObjectId.isValid(assignment.managerProfileId)) {
+                    (assignment as any).managerProfileId = await this.employeeProfileModel.findById(assignment.managerProfileId).select('firstName lastName').lean().exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate managerProfileId:', err.message);
+            }
+
+            try {
+                if (assignment.departmentId && Types.ObjectId.isValid(assignment.departmentId)) {
+                    (assignment as any).departmentId = await this.departmentModel.findById(assignment.departmentId).select('name').lean().exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate departmentId:', err.message);
+            }
+        }
+
+        return results as any;
     }
 
-    async getManagerAppraisalAssignments(managerProfileId: string) {
+    async getSubmittedAssignments() {
+        // Get all SUBMITTED assignments efficiently
+        const assignments = await this.appraisalAssignmentModel
+            .find({ status: AppraisalAssignmentStatus.SUBMITTED })
+            .lean()
+            .sort({ submittedAt: -1 })
+            .exec();
+
+        // Manually populate only what's needed for display
+        for (const assignment of assignments) {
+            try {
+                if (assignment.employeeProfileId && Types.ObjectId.isValid(assignment.employeeProfileId)) {
+                    (assignment as any).employeeProfileId = await this.employeeProfileModel
+                        .findById(assignment.employeeProfileId)
+                        .select('firstName lastName employeeNumber')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate employeeProfileId');
+            }
+
+            try {
+                if (assignment.managerProfileId && Types.ObjectId.isValid(assignment.managerProfileId)) {
+                    (assignment as any).managerProfileId = await this.employeeProfileModel
+                        .findById(assignment.managerProfileId)
+                        .select('firstName lastName')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate managerProfileId');
+            }
+
+            try {
+                if (assignment.cycleId && Types.ObjectId.isValid(assignment.cycleId)) {
+                    (assignment as any).cycleId = await this.appraisalCycleModel
+                        .findById(assignment.cycleId)
+                        .select('name')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate cycleId');
+            }
+
+            try {
+                if (assignment.departmentId && Types.ObjectId.isValid(assignment.departmentId)) {
+                    (assignment as any).departmentId = await this.departmentModel
+                        .findById(assignment.departmentId)
+                        .select('name')
+                        .lean()
+                        .exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate departmentId');
+            }
+        }
+
+        return assignments as any;
+    }
+
+    async getManagerAppraisalAssignments(managerProfileId: string, user?: any) {
         if (!Types.ObjectId.isValid(managerProfileId)) {
             throw new NotFoundException('Invalid manager profile ID');
         }
 
-        return await this.appraisalAssignmentModel
-        .find({ managerProfileId })
+        // Get the manager's employee profile to check their department and role
+        const managerProfile = await this.employeeProfileModel
+            .findById(managerProfileId)
+            .populate('accessProfileId')
+            .exec();
+
+        if (!managerProfile) {
+            throw new NotFoundException('Manager profile not found');
+        }
+
+        console.log('👔 Fetching assignments for manager:', managerProfileId);
+        console.log('   Manager department:', managerProfile.primaryDepartmentId);
+        console.log('   User roles from JWT:', user?.roles);
+        console.log('   Access profile:', managerProfile.accessProfileId);
+
+        // Build query based on role
+        let query: any;
+
+        // Check if user is Department Head from multiple sources
+        const userRoles = user?.roles || [];
+        const accessProfileRoles = (managerProfile.accessProfileId as any)?.roles || [];
+        const allRoles = [...userRoles, ...accessProfileRoles];
+
+        console.log('   All roles combined:', allRoles);
+
+        // Case-insensitive check for Department Head role
+        const isDepartmentHead = allRoles.some(role =>
+            role && role.toLowerCase().includes('department') && role.toLowerCase().includes('head')
+        );
+
+        if (isDepartmentHead && managerProfile.primaryDepartmentId) {
+            console.log('✅ Department Head access - showing all department assignments');
+            console.log('   Querying departmentId:', managerProfile.primaryDepartmentId);
+
+            // Show all assignments in the manager's department
+            query = { departmentId: managerProfile.primaryDepartmentId };
+        } else {
+            console.log('👤 Manager access - showing only direct reports');
+            console.log('   Querying managerProfileId:', managerProfileId);
+
+            // Show only assignments where this person is the manager
+            query = { managerProfileId };
+        }
+
+        const assignments = await this.appraisalAssignmentModel
+        .find(query)
         .populate('employeeProfileId', 'firstName lastName position')
+        .populate('managerProfileId', 'firstName lastName')
         .populate('cycleId', 'name cycleType startDate endDate status')
         .populate('templateId', 'name templateType')
         .populate('departmentId', 'name')
         .sort({ dueDate: 1 })
         .exec();
+
+        console.log('📊 Found assignments:', assignments.length);
+        if (assignments.length > 0) {
+            console.log('   Sample assignment departmentId:', assignments[0].departmentId);
+        }
+
+        return assignments;
     }
 
     async getAppraisalAssignmentById(assignmentId: string) {
@@ -297,7 +576,7 @@ export class PerformanceService {
 
         const assignment = await this.appraisalAssignmentModel
             .findById(assignmentId)
-            .populate('employeeProfileId', 'firstName lastName position departmentId')
+            .populate('employeeProfileId', 'firstName lastName employeeNumber position departmentId')
             .populate('managerProfileId', 'firstName lastName')
             .populate('templateId', 'name templateType evaluationCriteria')
             .populate('cycleId', 'name startDate endDate status')
@@ -330,7 +609,7 @@ export class PerformanceService {
     }
 
     // Appraisal Record Methods
-    async createOrUpdateAppraisalRecord(assignmentId: string, createRecordDto: any) {
+    async createOrUpdateAppraisalRecord(assignmentId: string, createRecordDto: any, user?: any) {
         if (!Types.ObjectId.isValid(assignmentId)) {
             throw new NotFoundException('Invalid assignment ID');
         }
@@ -348,13 +627,35 @@ export class PerformanceService {
             }, 0);
         }
 
-        const recordData = {
+        // Determine managerProfileId: use assignment's manager, or current user if no manager assigned
+        let managerProfileId = assignment.managerProfileId;
+        if (!managerProfileId && user) {
+            console.log('🔍 Assignment has no manager, using current user as manager');
+            console.log('   User object:', user);
+            console.log('   Looking for employee profile with userid:', user.userid || user.employeeNumber || user.email);
+
+            // Find the employee profile for the current user
+            const userId = user.userid || user.employeeNumber || user.email;
+            const managerProfile = await this.employeeProfileModel
+                .findById(userId)
+                .exec();
+
+            console.log('   Found manager profile:', managerProfile ? managerProfile._id : 'NOT FOUND');
+
+            if (managerProfile) {
+                managerProfileId = managerProfile._id;
+            } else {
+                throw new Error('Cannot create appraisal record: Manager profile not found for current user');
+            }
+        }
+
+        const recordData: any = {
         ...createRecordDto,
         assignmentId,
         cycleId: assignment.cycleId,
         templateId: assignment.templateId,
         employeeProfileId: assignment.employeeProfileId,
-        managerProfileId: assignment.managerProfileId,
+        managerProfileId,
         totalScore,
         status: AppraisalRecordStatus.DRAFT,
         };
@@ -391,9 +692,9 @@ export class PerformanceService {
         record.managerSubmittedAt = new Date();
         await record.save();
 
-        // Update assignment status
+        // Update assignment status - use record.assignmentId which is the assignment's _id
         await this.appraisalAssignmentModel
-        .findByIdAndUpdate(assignmentId, {
+        .findByIdAndUpdate(record.assignmentId, {
             status: AppraisalAssignmentStatus.SUBMITTED,
             submittedAt: new Date(),
             latestAppraisalId: record._id,
@@ -429,10 +730,26 @@ export class PerformanceService {
             throw new NotFoundException('Appraisal record not found');
         }
 
+        // Find the HR user's employee profile
+        let publisherProfileId: Types.ObjectId | undefined;
+        if (Types.ObjectId.isValid(publishedByEmployeeId)) {
+            publisherProfileId = new Types.ObjectId(publishedByEmployeeId);
+        } else {
+            // It's a username, look up the employee profile
+            const publisherProfile = await this.employeeProfileModel
+                .findOne({ accessProfileId: publishedByEmployeeId })
+                .exec();
+            if (publisherProfile) {
+                publisherProfileId = publisherProfile._id;
+            }
+        }
+
         // Update record status
         record.status = AppraisalRecordStatus.HR_PUBLISHED;
         record.hrPublishedAt = new Date();
-        record.publishedByEmployeeId = new Types.ObjectId(publishedByEmployeeId);
+        if (publisherProfileId) {
+            record.publishedByEmployeeId = publisherProfileId;
+        }
         await record.save();
 
         // Update assignment status
@@ -460,8 +777,12 @@ export class PerformanceService {
         ).exec();
 
         // Send notification to employee
+        const employeeId = typeof record.employeeProfileId === 'object'
+            ? (record.employeeProfileId as any)._id
+            : record.employeeProfileId;
+
         await this.notificationLogService.sendNotification({
-            to: new Types.ObjectId(record.employeeProfileId.toString()),
+            to: new Types.ObjectId(employeeId.toString()),
             type: 'Performance Appraisal Published',
             message: `Your performance appraisal has been published. Total score: ${record.totalScore}. You have 7 days to raise objections if needed.`,
         });
@@ -478,8 +799,8 @@ export class PerformanceService {
             .findById(recordId)
             .populate('assignmentId')
             .populate('cycleId', 'name cycleType')
-            .populate('templateId', 'name templateType')
-            .populate('employeeProfileId', 'firstName lastName position')
+            .populate('templateId', 'name templateType criteria ratingScale')
+            .populate('employeeProfileId', 'firstName lastName employeeNumber position')
             .populate('managerProfileId', 'firstName lastName')
             .populate('publishedByEmployeeId', 'firstName lastName')
             .exec();
@@ -497,8 +818,8 @@ export class PerformanceService {
 
         const record = await this.appraisalRecordModel
             .findByIdAndUpdate(
-            recordId, 
-            { status }, 
+            recordId,
+            { status },
             { new: true }
             )
             .exec();
@@ -509,27 +830,102 @@ export class PerformanceService {
         return record;
     }
 
-    // Appraisal Dispute Methods
-    async createAppraisalDispute(createDisputeDto: any) {
-        const requiredIds = [
-            "appraisalId",
-            "assignmentId",
-            "cycleId",
-            "raisedByEmployeeId"
-        ];
-
-        for (const field of requiredIds) {
-            if (!createDisputeDto[field]) {
-            throw new BadRequestException(`${field} is required`);
-            }
-            if (!Types.ObjectId.isValid(createDisputeDto[field])) {
-            throw new BadRequestException(`${field} is not a valid ObjectId`);
-            }
+    async updateAppraisalRecord(recordId: string, updateDto: any) {
+        if (!Types.ObjectId.isValid(recordId)) {
+            throw new NotFoundException('Invalid record ID');
         }
 
+        // Get the current record to access template
+        const currentRecord = await this.appraisalRecordModel
+            .findById(recordId)
+            .populate('templateId')
+            .exec();
+
+        if (!currentRecord) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        const template = currentRecord.templateId as any;
+
+        // Build update object
+        const updateData: any = {};
+
+        // Update ratings if provided
+        if (updateDto.ratings && Array.isArray(updateDto.ratings)) {
+            updateData.ratings = updateDto.ratings;
+
+            // Recalculate total score based on template weights
+            let totalScore = 0;
+            updateDto.ratings.forEach((rating: any) => {
+                const templateCriterion = template.criteria.find((c: any) => c.key === rating.key);
+                if (templateCriterion) {
+                    const weight = templateCriterion.weight / 100;
+                    const weightedScore = rating.ratingValue * weight;
+                    rating.weightedScore = weightedScore;
+                    totalScore += weightedScore;
+                }
+            });
+
+            updateData.totalScore = totalScore;
+
+            // Determine overall rating label based on total score
+            if (totalScore >= 90) updateData.overallRatingLabel = 'Exceptional';
+            else if (totalScore >= 80) updateData.overallRatingLabel = 'Exceeds Expectations';
+            else if (totalScore >= 70) updateData.overallRatingLabel = 'Meets Expectations';
+            else if (totalScore >= 60) updateData.overallRatingLabel = 'Below Expectations';
+            else updateData.overallRatingLabel = 'Unsatisfactory';
+        }
+
+        // Update other fields if provided
+        if (updateDto.managerSummary !== undefined) {
+            updateData.managerSummary = updateDto.managerSummary;
+        }
+        if (updateDto.strengths !== undefined) {
+            updateData.strengths = updateDto.strengths;
+        }
+        if (updateDto.improvementAreas !== undefined) {
+            updateData.improvementAreas = updateDto.improvementAreas;
+        }
+
+        // Update the record
+        const updatedRecord = await this.appraisalRecordModel
+            .findByIdAndUpdate(recordId, updateData, { new: true })
+            .populate('employeeProfileId', 'firstName lastName')
+            .populate('managerProfileId', 'firstName lastName')
+            .exec();
+
+        return updatedRecord;
+    }
+
+    // Appraisal Dispute Methods
+    async createAppraisalDispute(createDisputeDto: any) {
+        // Validate appraisalId is provided
+        if (!createDisputeDto.appraisalId) {
+            throw new BadRequestException('appraisalId is required');
+        }
+        if (!Types.ObjectId.isValid(createDisputeDto.appraisalId)) {
+            throw new BadRequestException('appraisalId is not a valid ObjectId');
+        }
+
+        // Fetch the appraisal record to auto-resolve other fields
+        const appraisal = await this.appraisalRecordModel
+            .findById(createDisputeDto.appraisalId)
+            .populate('assignmentId')
+            .exec();
+
+        if (!appraisal) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        // Auto-resolve required fields from the appraisal record
+        const assignmentId = appraisal.assignmentId instanceof Types.ObjectId
+            ? appraisal.assignmentId
+            : (appraisal.assignmentId as any)._id;
+        const cycleId = appraisal.cycleId;
+        const raisedByEmployeeId = appraisal.employeeProfileId;
+
         // Check if dispute is within 7-day window (BR 31)
-        const appraisal = await this.appraisalRecordModel.findById(createDisputeDto.appraisalId).exec();
-        if (appraisal && appraisal.hrPublishedAt) {
+        if (appraisal.hrPublishedAt) {
             const daysSincePublished = Math.floor(
                 (new Date().getTime() - appraisal.hrPublishedAt.getTime()) / (1000 * 60 * 60 * 24)
             );
@@ -541,13 +937,13 @@ export class PerformanceService {
         // ⭐ FIX #1 — MANUALLY GENERATE _id BECAUSE SCHEMA OVERRIDES IT
         const _id = new Types.ObjectId();
 
-        // ⭐ FIX #2 — Convert all IDs to ObjectId
+        // ⭐ FIX #2 — Convert all IDs to ObjectId (auto-resolved from appraisal)
         const dto = {
             _id,
             appraisalId: new Types.ObjectId(createDisputeDto.appraisalId),
-            assignmentId: new Types.ObjectId(createDisputeDto.assignmentId),
-            cycleId: new Types.ObjectId(createDisputeDto.cycleId),
-            raisedByEmployeeId: new Types.ObjectId(createDisputeDto.raisedByEmployeeId),
+            assignmentId: new Types.ObjectId(assignmentId),
+            cycleId: new Types.ObjectId(cycleId),
+            raisedByEmployeeId: new Types.ObjectId(raisedByEmployeeId),
             reason: createDisputeDto.reason,
             details: createDisputeDto.details,
             status: AppraisalDisputeStatus.OPEN,
@@ -591,6 +987,25 @@ export class PerformanceService {
         .populate('resolvedByEmployeeId', 'firstName lastName')
         .sort({ submittedAt: -1 })
         .exec();
+    }
+
+    async getEmployeeDisputes(employeeId: string) {
+        // employeeId is actually the employee's _id from the JWT token
+        // Convert string to ObjectId for proper querying
+        const employeeObjectId = new Types.ObjectId(employeeId);
+
+        const disputes = await this.appraisalDisputeModel
+        .find({ raisedByEmployeeId: employeeObjectId })
+        .populate('appraisalId')
+        .populate('assignmentId')
+        .populate('cycleId', 'name cycleType')
+        .populate('raisedByEmployeeId', 'firstName lastName')
+        .populate('assignedReviewerEmployeeId', 'firstName lastName')
+        .populate('resolvedByEmployeeId', 'firstName lastName')
+        .sort({ submittedAt: -1 })
+        .exec();
+
+        return disputes;
     }
 
     async updateDisputeStatus(
@@ -641,8 +1056,11 @@ export class PerformanceService {
 
     // Send notification to employee about dispute resolution
     if (status === AppraisalDisputeStatus.ADJUSTED || status === AppraisalDisputeStatus.REJECTED) {
+        // Get the employee ID - raisedByEmployeeId is populated so we need to extract _id
+        const employeeId = dispute.raisedByEmployeeId._id || dispute.raisedByEmployeeId;
+
         await this.notificationLogService.sendNotification({
-            to: new Types.ObjectId(dispute.raisedByEmployeeId.toString()),
+            to: new Types.ObjectId(employeeId.toString()),
             type: 'Performance Appraisal Dispute Resolved',
             message: `Your performance appraisal dispute has been ${status.toLowerCase()}. ${resolutionData?.resolutionSummary || ''}`,
         });

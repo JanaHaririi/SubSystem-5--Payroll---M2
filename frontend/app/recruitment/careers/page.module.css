@@ -1,0 +1,444 @@
+/* page.module.css */
+
+/* Main Container */
+.pageContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background-color: #1e293b;
+  color: white;
+  padding: 20px 0;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  padding: 0 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sidebarSection {
+  margin-bottom: 30px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sidebarItem:hover {
+  background-color: #334155;
+  color: white;
+}
+
+.sidebarItemActive {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.sidebarIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Main Content Area */
+.mainContent {
+  flex: 1;
+  margin-left: 240px;
+  padding: 40px;
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.headerLeft {
+  flex: 1;
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 20px 30px 20px 150px;
+  /*border-bottom: 4px solid #e2e8f0; /* Light gray line */
+}
+
+.titleWrapper {
+  width: 100%;
+}
+
+.fullLine {
+  margin-top: 1px;
+  width: 100%;
+  height: 3px;
+  background-color: #d1d5db; /* light gray */
+}
+
+.pageSubtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.headerRight {
+  display: flex;
+  gap: 12px;
+}
+
+.createButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createButton:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Filters Section */
+.filtersSection {
+  margin-bottom: 24px;
+}
+
+.filterDropdown {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #475569;
+  background-color: white;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+/* Table Container */
+.tableContainer {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Table Header */
+.tableHeader {
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tableHeaderCell {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Table Body */
+.tableRow {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f8fafc;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
+  padding: 20px 24px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+Policy Name Column
+.policyName {
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.policyDescription {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Type Badges */
+.typeBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.typeMisconduct {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.typeLeave {
+  color: #2563eb;
+  background-color: #dbeafe;
+}
+
+.typeAllowance {
+  color: #16a34a;
+  background-color: #dcfce7;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.statusActive {
+  color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.statusPending {
+  color: #ca8a04;
+  background-color: #fef9c3;
+}
+
+.statusDraft {
+  color: #64748b;
+  background-color: #f1f5f9;
+}
+
+/* Date and Modified Info */
+.dateText {
+  color: #475569;
+  font-size: 14px;
+}
+
+.modifiedInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modifiedBy {
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.modifiedDate {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Actions Column */
+.actionsCell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton:hover {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .mainContent {
+    margin-left: 200px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+  
+  .mainContent {
+    margin-left: 0;
+    padding: 20px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .tableContainer {
+    overflow-x: auto;
+  }
+  
+  .table {
+    min-width: 800px;
+  }
+
+
+  /* specific to my needs*/
+
+  .searchSection {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.searchInput {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 250px;
+}
+
+.searchButton {
+  padding: 8px 14px;
+  background: #0070f3;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.requisitionList {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.requisitionCard {
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.updateButton {
+  background: #0070f3;
+  color: #fff;
+  margin-right: 10px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.deleteButton {
+  background: #d9534f;
+  color: #fff;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.searchResultBox {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 6px;
+  background: #eef5ff;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.updateBtn {
+  background-color: #1976d2;
+  padding: 6px 12px;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.deleteBtn {
+  background-color: #d32f2f;
+  padding: 6px 12px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+}

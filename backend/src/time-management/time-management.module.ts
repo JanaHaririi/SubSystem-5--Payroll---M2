@@ -29,6 +29,7 @@ import { ShiftService } from './services/shift.service';
 import { LatenessRuleService } from './services/lateness-rule.service';
 import { OvertimeRuleService } from './services/overtime-rule.service';
 import { TimeExceptionService } from './services/time-exception.service';
+import { LeavesModule } from 'src/leaves/leaves.module';
 
 
 
@@ -48,7 +49,8 @@ import { TimeExceptionService } from './services/time-exception.service';
     
   ]),
   forwardRef(()=>EmployeeProfileModule),
-  OrganizationStructureModule
+  OrganizationStructureModule,
+  LeavesModule
 
   ],
   controllers: [TimeManagementController],

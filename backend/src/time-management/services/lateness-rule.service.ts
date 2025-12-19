@@ -190,5 +190,6 @@ export class LatenessRuleService {
       action: isRepeated ? 'Escalate to HR for disciplinary action' : 'No escalation required'
     };
   }
-  
+ 
+
 }

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateCompanySettingsDto {
   @IsString()
@@ -12,4 +12,12 @@ export class CreateCompanySettingsDto {
   @IsString()
   @IsNotEmpty()
   currency: string; 
+
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @IsString()
+  @IsOptional()
+  payCycle?: string;
 }

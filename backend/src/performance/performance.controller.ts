@@ -91,8 +91,17 @@ export class PerformanceController {
 
   @Get('managers/:managerProfileId/assignments')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getManagerAppraisalAssignments(@Param('managerProfileId') managerProfileId: string) {
-    return this.performanceService.getManagerAppraisalAssignments(managerProfileId);
+  async getManagerAppraisalAssignments(
+    @Param('managerProfileId') managerProfileId: string,
+    @CurrentUser() user: CurrentUserData
+  ) {
+    return this.performanceService.getManagerAppraisalAssignments(managerProfileId, user);
+  }
+
+  @Get('assignments/submitted')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getSubmittedAssignments() {
+    return this.performanceService.getSubmittedAssignments();
   }
 
   // APPRAISAL RECORD ENDPOINTS
@@ -101,8 +110,9 @@ export class PerformanceController {
   async createOrUpdateAppraisalRecord(
     @Param('assignmentId') assignmentId: string,
     @Body() createRecordDto: CreateAppraisalRecordDto,
+    @CurrentUser() user: CurrentUserData,
   ) {
-    return this.performanceService.createOrUpdateAppraisalRecord(assignmentId, createRecordDto);
+    return this.performanceService.createOrUpdateAppraisalRecord(assignmentId, createRecordDto, user);
   }
 
   @Put('assignments/:assignmentId/submit')
@@ -130,6 +140,12 @@ export class PerformanceController {
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getAppraisalDisputes(@Query('cycleId') cycleId?: string) {
     return this.performanceService.getAppraisalDisputes(cycleId);
+  }
+
+  @Get('my-disputes')
+  @UseGuards(AuthGuard)
+  async getMyDisputes(@CurrentUser() user: CurrentUserData) {
+    return this.performanceService.getEmployeeDisputes(user.employeeId);
   }
 
   @Put('disputes/:disputeId/status')
@@ -188,6 +204,15 @@ export class PerformanceController {
     @Body('status') status: string,
   ) {
     return this.performanceService.updateAppraisalRecordStatus(recordId, status);
+  }
+
+  @Put('records/:recordId')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async updateAppraisalRecord(
+    @Param('recordId') recordId: string,
+    @Body() updateDto: any,
+  ) {
+    return this.performanceService.updateAppraisalRecord(recordId, updateDto);
   }
 
   @Put('disputes/:disputeId/assign-reviewer')

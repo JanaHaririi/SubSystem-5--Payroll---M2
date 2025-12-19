@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PolicyType } from '../enums/payroll-configuration-enums';
 import { Applicability } from '../enums/payroll-configuration-enums';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
@@ -20,7 +20,6 @@ export class updatePayrollPoliciesDto {
   effectiveDate?: Date;
 
   @IsOptional()
-  @IsNumber()
   ruleDefinition?: {
     percentage?: number;
     fixedAmount?: number;
@@ -33,7 +32,7 @@ export class updatePayrollPoliciesDto {
 
   @IsOptional()
   @IsEnum(ConfigStatus)
-  ConfigStatus?: ConfigStatus;
+  status?: ConfigStatus;
 }
 
 

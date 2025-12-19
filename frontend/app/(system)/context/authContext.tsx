@@ -7,20 +7,24 @@ import {
   useState,
   ReactNode,
 } from "react";
-import axiosInstance, { registerUnauthenticatedHandler } from "@/app/utils/ApiClient";
+import axiosInstance, {
+  registerUnauthenticatedHandler,
+} from "@/app/utils/ApiClient";
 import { usePathname, useRouter } from "next/navigation";
 
 type User = {
-  id?: string;
+  userid?: string;
   role?: string;
   roles?: string[];
   name?: string;
   email: string;
-  age?: number;
-  userType?: string;
+  age?:number;
+  userType?:"candidate";
+  status?: string;
   candidateNumber?: string;
   employeeNumber?: string;
 };
+
 
 type AuthContextType = {
   user: User | null;
@@ -31,8 +35,20 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to normalize roles from backend into lowercase array
+function normalizeRoles(user: User | null): string[] {
+  if (!user) return [];
+  if (Array.isArray(user.roles)) {
+    return user.roles.map((r) => String(r).toLowerCase());
+  }
+  if (user.role) {
+    return [String(user.role).toLowerCase()];
+  }
+  return [];
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router= useRouter()
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
@@ -41,68 +57,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await axiosInstance.get<User>("/auth/me");
       setUser(res.data);
-      console.log('fetch me',res)
+      console.log("fetch me", res);
     } catch {
-      setUser(null); 
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load: check if we’re logged in
   useEffect(() => {
     fetchMe();
-  }, []); // is it righ to refresh on changing user
+  }, []);
 
-
- useEffect(() => {
-  const handleUnauthenticated= () => {
-    console.log('registering unauthorized handler')
-    setUser(null);
-    router.replace("/login");
-    return
-  };
-  // Register this function with the axios file
-  registerUnauthenticatedHandler(handleUnauthenticated);
-}, [router]);
-
-
-  // 2️⃣ Revalidate auth on every route change
+  // Global 401 handler from axios
   useEffect(() => {
-    // pathname is undefined on very first render sometimes - just guard
-    if (!pathname || pathname=='/login' || pathname=='/register' ) return;
-    console.log("Route changed, revalidating /auth/me",pathname);
-    // We do NOT touch `loading` here, to avoid global spinner flicker
+    const handleUnauthenticated = () => {
+      console.log("unauthenticated – redirecting to /login");
+      setUser(null);
+      router.replace("/login");
+    };
+
+    registerUnauthenticatedHandler(handleUnauthenticated);
+  }, [router]);
+
+  // Revalidate auth on every route change (except auth pages)
+  useEffect(() => {
+    if (!pathname || pathname === "/login" || pathname === "/register") return;
+    console.log("Route changed, revalidating /auth/me", pathname);
+
     axiosInstance
-      .get("/auth/me")
+      .get<User>("/auth/me")
       .then((res) => {
         setUser(res.data);
       })
       .catch(() => {
-        // If cookie expired → /auth/me fails → user becomes null
         setUser(null);
-        // optional: you *can* redirect here if you want auto-kick:
-       router.replace("/login");
+        router.replace("/login");
       });
-  }, [pathname]); 
+  }, [pathname, router]);
 
-  // 2️⃣ Login: call Nest, it sets cookie, then refresh user
+  // Login: call backend, then redirect based on role
   const login = async (employeeNumber: string, password: string) => {
+    // 1) Perform login (sets cookie on backend)
     await axiosInstance.post("/auth/login", { employeeNumber, password });
-    await fetchMe(); // now /auth/me should return the logged-in user
+
+    // 2) Get current user
+    const res = await axiosInstance.get<User>("/auth/me");
+    const me = res.data;
+    setUser(me);
+
+    // 3) Decide where to send them
+    const roles = normalizeRoles(me);
+    const isHRAdmin =
+      roles.includes("hr admin") || roles.includes("system admin");
+    const isManager =
+      roles.includes("department head") || roles.includes("department_head") ||
+      roles.includes("department manager") || roles.includes("department_manager");
+    const isEmployee = roles.includes("department employee");
+    const isCandidate = roles.includes("job candidate");
+
+    if (isHRAdmin) {
+      router.replace("/dashboard/admin/leaves");
+    } else if (isManager) {
+      router.replace("/dashboard/manager/leaves");
+    } else if (isEmployee) {
+      router.replace("/dashboard/employee/leaves");
+    } else if (isCandidate) {
+      router.replace("/recruitment/my-applications");
+    } else {
+      // fallback
+      router.replace("/home");
+    }
   };
 
-
-
-  // 3️⃣ Logout: clear cookie in backend, clear user in frontend
+  // Logout: clear cookie in backend, then clear user
   const logout = async () => {
     try {
-      await axiosInstance.post("/auth/logout"); // Nest should clear cookie
+      await axiosInstance.post("/auth/logout");
     } catch {
-      // even if request fails, we clear UI state
+      // ignore – we still clear local state
     }
     setUser(null);
     router.replace("/login");
-
   };
 
   const value: AuthContextType = {
@@ -110,14 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     login,
     logout,
-
-
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Nice hook so we don't repeat useContext(AuthContext) everywhere
+// Hook
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {

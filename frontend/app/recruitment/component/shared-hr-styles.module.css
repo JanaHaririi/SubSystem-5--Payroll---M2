@@ -1,0 +1,500 @@
+/* ============================================
+   UNIVERSAL HR PAGES STYLING - PURPLE THEME
+   Roboto Bold (Titles/Buttons) + Roboto Condensed (Body)
+   ============================================ */
+
+/* Import Roboto (Bold for titles) and Roboto Condensed (for body text) */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Roboto+Condensed:wght@300;400;700&display=swap');
+
+/* Main Container - Roboto Condensed for all body text */
+.container {
+  padding: 40px;
+  background-color: #e6d9ff;
+  min-height: 100vh;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+/* Headers - Purple - Roboto BOLD */
+.pageTitle {
+  font-size: 36px;
+  font-weight: 700; /* Bold */
+  color: #7C40A9; /* Middle purple from image */
+  margin: 20px 0;
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+.fullLine {
+  margin-top: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+  height: 5px;
+  background-color: #7C40A9; /* Middle purple */
+}
+
+/* Search Section */
+.searchSection {
+  margin: 20px 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchForm {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid #9570DD; /* Light purple from image */
+}
+
+.formGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Search Input - White with Purple Outline - Roboto Condensed */
+.searchInput,
+.input {
+  flex: 1;
+  min-width: 250px;
+  padding: 12px 16px;
+  padding-left: 40px; /* Space for search icon */
+  font-size: 14px;
+  border: 2px solid #7C40A9; /* Middle purple outline */
+  border-radius: 8px;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237C40A9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 20px;
+  transition: all 0.2s ease;
+  font-family: 'Roboto Condensed', sans-serif;
+  color: #1e293b !important; /* Dark text color - force override */
+}
+
+.searchInput:hover,
+.input:hover {
+  border-color: #693699; /* Dark purple from image */
+  box-shadow: 0 0 0 3px rgba(124, 64, 169, 0.1);
+}
+
+.searchInput:focus,
+.input:focus {
+  outline: none;
+  border-color: #693699;
+  box-shadow: 0 0 0 4px rgba(124, 64, 169, 0.2);
+}
+
+.searchInput::placeholder,
+.input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select Dropdowns - Roboto Condensed */
+.select {
+  padding: 10px 16px;
+  font-size: 14px;
+  border: 2px solid #7C40A9;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.select:hover {
+  border-color: #693699;
+  box-shadow: 0 0 0 3px rgba(124, 64, 169, 0.1);
+}
+
+.select:focus {
+  outline: none;
+  border-color: #693699;
+  box-shadow: 0 0 0 4px rgba(124, 64, 169, 0.2);
+}
+
+/* Buttons - Roboto BOLD */
+.searchButton,
+.button,
+.updateButton,
+.updateBtn,
+.clearButton,
+.referralBtn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700; /* Bold */
+  color: #ffffff;
+  background-color: #b89bf1;
+  border: 2px solid #7C40A9; /* Purple border */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+.searchButton:hover,
+.button:hover,
+.updateButton:hover,
+.updateBtn:hover,
+.clearButton:hover,
+.referralBtn:hover {
+  background-color: #7C40A9; /* Purple background on hover */
+  color: #ffffff; /* White text on hover */
+  transform: scale(1.08); /* Grow on hover */
+  box-shadow: 0 4px 12px rgba(124, 64, 169, 0.5);
+}
+
+.searchButton:active,
+.button:active,
+.updateButton:active,
+.updateBtn:active {
+  transform: scale(1.02);
+}
+
+.searchButton:focus,
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(124, 64, 169, 0.3);
+}
+
+/* Create Button - Roboto BOLD */
+.createButton {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700; /* Bold */
+  color: #ffffff; /* White text */
+  background-color: #7C40A9; /* Purple background */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+.createButton:hover {
+  background-color: #693699; /* Darker purple on hover */
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(124, 64, 169, 0.5);
+}
+
+/* Delete Button - Roboto BOLD */
+.deleteButton,
+.deleteBtn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700; /* Bold */
+  color: #ffffff;
+  background-color: #b89bf1;
+  border: 2px solid #7C40A9; /* Purple border */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+.deleteButton:hover,
+.deleteBtn:hover {
+  background-color: #2b0848; /* Very dark purple on hover */
+  color: #ffffff;
+  transform: scale(1.08); /* Grow on hover */
+  box-shadow: 0 4px 12px rgba(43, 8, 72, 0.5);
+}
+
+/* Card/Item Boxes - Roboto Condensed */
+.card,
+.requisitionCard {
+  padding: 20px;
+  margin-bottom: 16px;
+  background-color: #4d2f63; /* Middle purple background */
+  border: 3px solid #693699; /* Dark purple outline */
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(105, 54, 153, 0.2);
+  color: #ffffff; /* White text */
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.card:hover,
+.requisitionCard:hover {
+  border-color: #904ecd; /* Dark purple on hover */
+  box-shadow: 0 4px 12px rgba(105, 54, 153, 0.4);
+  transform: translateY(-2px);
+  background-color: #9349d9; /* Light purple on hover */
+}
+
+/* Make all text inside cards white and BOLD for labels */
+.card p,
+.card strong,
+.requisitionCard p,
+.requisitionCard strong {
+  color: #ffffff;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.card strong,
+.requisitionCard strong {
+  font-weight: 700; /* Bold for labels */
+}
+
+/* Highlighted Card (for search results) */
+.highlight {
+  border: 4px solid #693699; /* Dark purple */
+  background-color: #9570DD; /* Light purple background */
+  box-shadow: 0 6px 16px rgba(105, 54, 153, 0.5);
+}
+
+/* Search Info Banner - Roboto Condensed */
+.searchInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  background-color: #f3e8ff;
+  border: 2px solid #7C40A9;
+  border-radius: 8px;
+  color: #693699;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.searchInfo p {
+  margin: 0;
+  font-weight: 400;
+}
+
+.searchInfo strong {
+  color: #7C40A9;
+  font-weight: 700; /* Bold */
+}
+
+/* Error Banner - Roboto Condensed */
+.errorBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  background-color: #fee2e2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  color: #991b1b;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.errorBanner p {
+  margin: 0;
+  font-weight: 400;
+}
+
+/* List Styles - Roboto Condensed */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  background-color: #7C40A9; /* Middle purple background */
+  border: 3px solid #693699; /* Dark purple outline */
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #ffffff; /* White text */
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.listItem:hover {
+  border-color: #693699;
+  box-shadow: 0 2px 8px rgba(105, 54, 153, 0.3);
+  background-color: #9570DD;
+}
+
+/* Actions Container */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Loading State - Roboto BOLD */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 18px;
+  color: #7C40A9;
+  font-weight: 700; /* Bold */
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+/* Search Result Box - Roboto Condensed */
+.searchResultBox {
+  margin-top: 15px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #7C40A9; /* Middle purple background */
+  border: 3px solid #693699; /* Dark purple outline */
+  color: #ffffff; /* White text */
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+/* Table Styles */
+.tableContainer {
+  background-color: white;
+  border-radius: 12px;
+  border: 2px solid #9570DD;
+  box-shadow: 0 2px 8px rgba(124, 64, 169, 0.1);
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.tableHeader {
+  background-color: #7C40A9; /* Middle purple background */
+  border-bottom: 3px solid #693699;
+  color: #ffffff; /* White text */
+}
+
+/* Table Headers - Roboto BOLD */
+.tableHeaderCell {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700; /* Bold */
+  color: #ffffff; /* White text */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Roboto', sans-serif; /* Roboto Bold */
+}
+
+.tableRow {
+  border-bottom: 1px solid #9570DD;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #faf5ff;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
+  padding: 16px 24px;
+  font-size: 14px;
+  color: #1e293b;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+/* Status Badges - Roboto Condensed Bold */
+.statusBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700; /* Bold */
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.statusActive {
+  color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.statusPending {
+  color: #7C40A9;
+  background-color: #f3e8ff;
+}
+
+.statusDraft {
+  color: #64748b;
+  background-color: #f1f5f9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+
+  .searchSection,
+  .formGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchInput,
+  .input,
+  .select,
+  .searchButton,
+  .button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .card,
+  .requisitionCard {
+    padding: 16px;
+  }
+
+  .searchInfo,
+  .errorBanner {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+/* Additional utility classes */
+.strong {
+  color: #ffffff;
+  font-weight: 700; /* Bold */
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+.textMuted {
+  color: #e9d5ff;
+}
+
+.textPurple {
+  color: #7C40A9;
+}
+
+.bgPurpleLight {
+  background-color: #faf5ff;
+}
+
+.borderPurple {
+  border: 2px solid #7C40A9;
+}

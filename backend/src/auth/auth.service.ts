@@ -26,11 +26,14 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<string> {
+    console.log('🔵 Registration attempt:', registerDto.employeeNumber, registerDto.workEmail);
+
     const existingEmployee = await this.employeeProfileModel.findOne({
       employeeNumber: registerDto.employeeNumber
     });
 
     if (existingEmployee) {
+      console.log('❌ Employee number already exists:', registerDto.employeeNumber);
       throw new ConflictException('Employee number already exists');
     }
 
@@ -56,13 +59,23 @@ export class AuthService {
     const newEmployee = await this.employeeProfileModel.create({
       employeeNumber: registerDto.employeeNumber,
       workEmail: registerDto.workEmail,
+      personalEmail: registerDto.personalEmail,
+      mobilePhone: registerDto.mobilePhone,
+      homePhone: registerDto.homePhone,
       password: hashedPassword,
       firstName: registerDto.firstName,
+      middleName: registerDto.middleName,
       lastName: registerDto.lastName,
       nationalId: registerDto.nationalId,
       dateOfHire: new Date(registerDto.dateOfHire),
-      fullName: `${registerDto.firstName} ${registerDto.lastName}`,
+      dateOfBirth: registerDto.dateOfBirth ? new Date(registerDto.dateOfBirth) : undefined,
+      fullName: `${registerDto.firstName} ${registerDto.middleName ? registerDto.middleName + ' ' : ''}${registerDto.lastName}`,
+      gender: registerDto.gender,
+      maritalStatus: registerDto.maritalStatus,
+      address: registerDto.address,
     });
+
+    console.log('✅ Employee created:', newEmployee._id, newEmployee.fullName);
 
     // Create role assignment with provided roles or default
     const roleAssignment = await this.employeeRoleModel.create({
@@ -72,12 +85,18 @@ export class AuthService {
       isActive: true,
     });
 
+    console.log('✅ Role assignment created:', roleAssignment._id, 'Roles:', roleAssignment.roles);
+
     // Link role assignment to employee profile
     await this.employeeProfileModel.findByIdAndUpdate(newEmployee._id, {
       accessProfileId: roleAssignment._id,
     });
 
-    return 'Registered successfully';
+    console.log('✅ Registration completed successfully for:', registerDto.employeeNumber);
+
+    //return 'Registered successfully';
+      return newEmployee._id.toString(); //need the employee id returned for a functionality
+
   }
 
   async signIn(
@@ -160,8 +179,9 @@ export class AuthService {
     }
 
     const payload = {
-      userid: candidate._id,
+      userid: candidate._id, //to match decorator interface in current user decorator
       userType: 'candidate',
+      roles: ['candidate'], // mismatch caused candidate gaurds to mullfunction -change to match decorator interface in current user decorator so that gaurds work
       candidateNumber: candidate.candidateNumber,
       email: candidate.personalEmail,
       status: candidate.status,

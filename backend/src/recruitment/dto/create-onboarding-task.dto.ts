@@ -38,6 +38,9 @@ export class CreateOnboardingTaskDto {
   @IsMongoId()
   employeeId: string;
 
+   @IsMongoId()
+  contractId: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TaskItemDto)

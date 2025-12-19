@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
 
 export class createInsuranceBracketsDTO {
@@ -11,7 +11,8 @@ export class createInsuranceBracketsDTO {
   amount: number;
 
   @IsEnum(ConfigStatus)
-  status: ConfigStatus;
+  @IsOptional()
+  status?: ConfigStatus;
 
   @IsNumber()
   @Min(0)
@@ -23,11 +24,11 @@ export class createInsuranceBracketsDTO {
 
   @IsNumber()
   @IsNotEmpty()
-  EmployeeRate: number;
+  employeeRate: number;
 
   @IsNumber()
   @IsNotEmpty()
-  EmployerRate: number;
+  employerRate: number;
 }
 
 

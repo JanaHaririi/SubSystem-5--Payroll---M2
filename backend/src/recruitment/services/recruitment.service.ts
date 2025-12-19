@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateJobOfferDto } from '../dto/create-job-offer.dto';
 import { UpdateJobOfferDto } from '../dto/update-job-offer.dto';
 import { Offer, OfferDocument } from '../models/offer.schema';
@@ -28,6 +28,7 @@ import { ApplicationStatusHistory, ApplicationStatusHistoryDocument } from '../m
 import { OnboardingService } from './onboarding.service';
 import { OfferResponseStatus } from '../enums/offer-response-status.enum';
 import { OnboardingTaskStatus } from '../enums/onboarding-task-status.enum';
+import { OfferFinalStatus } from '../enums/offer-final-status.enum';
 
 
 @Injectable()
@@ -102,6 +103,10 @@ async getOffer(id: string): Promise<OfferDocument> {
   return offer;
 }
 
+  async getOffersByCandidate(candidateId: string) {
+    return this.offerModel.find({ candidateId }).populate('applicationId').exec();
+  }
+
  async updateOffer(id: string, jobOfferData: UpdateJobOfferDto): Promise<OfferDocument> {
   const currentOffer = await this.offerModel.findById(id);
   if (!currentOffer) throw new NotFoundException('offer not found');
@@ -111,12 +116,14 @@ async getOffer(id: string): Promise<OfferDocument> {
 
   // Trigger pre-boarding when offer is accepted
   if (
-    currentOffer.applicantResponse !== OfferResponseStatus.ACCEPTED &&  updatedOffer.applicantResponse === OfferResponseStatus.ACCEPTED) {
+    currentOffer.applicantResponse !== OfferResponseStatus.ACCEPTED &&  updatedOffer.applicantResponse === OfferResponseStatus.ACCEPTED &&updatedOffer.finalStatus===OfferFinalStatus.APPROVED) {
     const startDate = updatedOffer.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     
+      const contract = await this.onboardingService.getContractByOfferId(updatedOffer.id)
     // Create onboarding record with all pre-boarding tasks
     await this.onboardingService.createOnboardingTask({
       employeeId: updatedOffer.candidateId.toString(),
+      contractId :contract.id.toString(),
       tasks: [
         {
           name: 'Contract Signing',
@@ -207,6 +214,35 @@ async getOffer(id: string): Promise<OfferDocument> {
     if (!interview) throw new NotFoundException('interview not found');
     return interview;
   }
+  async getInterviewByApplicationId(applicationId: string): Promise<InterviewDocument> {
+  const interview = await this.interviewModel
+    .findOne({ applicationId })
+    .exec();
+  
+  if (!interview) {
+    throw new NotFoundException(`Interview not found for application ID: ${applicationId}`);
+  }
+  
+  return interview;
+}
+
+async getInterviewByEmployeeId(employeeId: string): Promise<InterviewDocument[]> {
+  const applications = await this.applicationModel.find({ candidateId: employeeId }).select('_id').exec();
+  
+  if (!applications || applications.length === 0) {
+    throw new NotFoundException(`No applications found for employee ID: ${employeeId}`);
+  }
+  
+  const applicationIds = applications.map(app => app._id);
+  
+  const interviews = await this.interviewModel.find({ applicationId: { $in: applicationIds } }).exec();
+  
+  if (!interviews || interviews.length === 0) {
+    throw new NotFoundException(`No interviews found for employee ID: ${employeeId}`);
+  }
+  
+  return interviews;
+}
 
   async updateInterview(id: string, interviewData: UpdateInterviewDto): Promise<InterviewDocument> {
     const updatedInterview = await this.interviewModel.findByIdAndUpdate(id, interviewData, { new: true });
@@ -247,6 +283,10 @@ async getOffer(id: string): Promise<OfferDocument> {
     const feedback = await this.assessmentResultModel.findById(id).exec();
     if (!feedback) throw new NotFoundException('feedback not found');
     return feedback;
+  }
+
+    async getFeedbackByInterview(interviewId: string) {
+    return this.assessmentResultModel.find({ interviewId }).exec();
   }
 
   //multiple panel members can create feedback during an interview - could be useful for HR to view all feedback
@@ -299,6 +339,11 @@ async getApplication(id: string): Promise<ApplicationDocument> {
   if (!application) throw new NotFoundException('application not found');
   return application;
 }
+
+  async getApplicationsByCandidate(candidateId: string) {
+    return this.applicationModel.find({ candidateId }).populate('requisitionId').exec();
+  }
+
 
   async updateApplication(id: string, applicationData: UpdateApplicationDto): Promise<ApplicationDocument> {
     const currentApplication = await this.applicationModel.findById(id);
@@ -400,9 +445,18 @@ async getApplication(id: string): Promise<ApplicationDocument> {
 }
 
 async getApplicationHistory(applicationId: string): Promise<ApplicationStatusHistoryDocument[]> {
-  return this.applicationHistoryModel.find({ applicationId }).populate('changedBy').sort({ createdAt: -1 }).exec();
+  console.log('Searching for applicationId:', applicationId);
+  
+  const history = await this.applicationHistoryModel
+    .find({ applicationId: new Types.ObjectId(applicationId) })
+    // Remove .populate('changedBy', 'name email')
+    .sort({ createdAt: -1 })
+    .exec();
+    
+  console.log('Found history records:', history.length);
+  
+  return history;
 }
-
   //template services
 
   async createJobTemplate(jobTemplateData: CreateJobTemplateDto): Promise<JobTemplateDocument> {

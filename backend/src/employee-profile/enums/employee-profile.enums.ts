@@ -41,9 +41,9 @@ export enum SystemRole {
   LEGAL_POLICY_ADMIN = 'Legal & Policy Admin',
   RECRUITER = 'Recruiter',
   FINANCE_STAFF = 'Finance Staff',
-  JOB_CANDIDATE = 'Job Candidate',
+  JOB_CANDIDATE = 'candidate', // Originally Job Candidate was not matching the responses in thunderclient causing mismatch
   HR_ADMIN = 'HR Admin',
-  DEPARTMENT_MANAGER = "DEPARTMENT_MANAGER",
+  DEPARTMENT_MANAGER = "DEPARTMENT MANAGER", //<- NOT PROVIDED IN SOLUTION
 }
 
 export enum CandidateStatus {

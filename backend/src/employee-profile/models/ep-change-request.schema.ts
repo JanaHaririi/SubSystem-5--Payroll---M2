@@ -17,9 +17,6 @@ export class EmployeeProfileChangeRequest {
   @Prop({ type: String })
   reason?: string;
 
-  @Prop({ type: Object })
-  requestedChanges?: Record<string, any>;
-
   @Prop({
     type: String,
     enum: Object.values(ProfileChangeStatus),
