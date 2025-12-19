@@ -1,0 +1,369 @@
+/* app/offboarding/termination/page.module.css */
+
+/* Main Layout */
+.wrapper {
+  margin-left: 240px;
+  padding: 40px 50px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+/* Table Styles */
+.tableContainer {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 10px;
+  padding: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.td {
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+}
+
+.row:hover {
+  background-color: #f8fafc;
+}
+
+/* Status Badges */
+.statusBadge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+.statusPending {
+  background-color: #fef9c3;
+  color: #ca8a04;
+}
+
+.statusApproved {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.statusRejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.statusReview {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+/* Buttons */
+.updateButton {
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.2s ease;
+}
+
+.updateButton:hover:not([disabled]) {
+  background-color: #2563eb;
+}
+
+.updateButton[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  background-color: #ef4444;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+.backButton {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Form Styles */
+.formContainer {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1e293b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: white;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.submitButton {
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submitButton:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Card Component */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+/* Error Message */
+.errorMessage {
+  padding: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Success Message */
+.successMessage {
+  padding: 12px;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  color: #16a34a;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Progress Bar */
+.progressBar {
+  width: 100%;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progressFill {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.progressFillComplete {
+  background: #16a34a;
+}
+
+/* Task Item */
+.taskItem {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.taskItem h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.taskItem p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.taskActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.infoCard {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.infoCard p:first-child {
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.infoCard p:last-child {
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Action Buttons Container */
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wrapper {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .pageTitle {
+    font-size: 20px;
+  }
+
+  .tableContainer {
+    overflow-x: auto;
+    padding: 12px;
+  }
+
+  .table {
+    min-width: 800px;
+  }
+
+  .formContainer {
+    padding: 20px;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .actionButtons button {
+    width: 100%;
+  }
+}

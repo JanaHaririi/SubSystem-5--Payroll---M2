@@ -1,0 +1,42 @@
+/* form.module.css */
+
+.form {
+  max-width: 400px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input,
+.radio,
+.select,
+.button {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.input[type="number"] {
+  width: 100%;
+}
+
+.radio {
+  margin-right: 10px;
+}
+.button {
+  background-color: #1c5f3a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #124127;
+}
