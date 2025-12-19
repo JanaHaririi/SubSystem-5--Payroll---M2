@@ -13,8 +13,6 @@ export interface TimeException {
   assignedTo: string | { _id: string; firstName: string; lastName: string; email: string };
   reason?: string;
   status: "OPEN" | "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED";
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export default function TimeExceptionsPage() {
@@ -50,8 +48,6 @@ export default function TimeExceptionsPage() {
 
       setExceptions(Array.isArray(data) ? data.map((e: any) => ({
         ...e,
-        createdAt: new Date(e.createdAt),
-        updatedAt: new Date(e.updatedAt),
       })) : []);
     } catch (err) {
       console.error("Error fetching time exceptions:", err);

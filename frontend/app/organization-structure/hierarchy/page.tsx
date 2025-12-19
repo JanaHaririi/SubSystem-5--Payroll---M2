@@ -27,6 +27,7 @@ export default function OrganizationHierarchyPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [headEmployee, setHeadEmployee] = useState<any>(null);
   const [colleagues, setColleagues] = useState<any[]>([]);
+  const [reportsTo, setReportsTo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -57,6 +58,7 @@ export default function OrganizationHierarchyPage() {
         if (res.data.department) setDepartments([res.data.department]);
         if (res.data.headEmployee) setHeadEmployee(res.data.headEmployee);
         if (res.data.colleagues) setColleagues(res.data.colleagues);
+        if (res.data.reportsTo) setReportsTo(res.data.reportsTo);
       }
     } catch (err) {
       console.error(err);
@@ -80,19 +82,35 @@ export default function OrganizationHierarchyPage() {
             (pos) => pos.departmentId?._id === dept._id
           );
 
+          // Debug logging for IT Department
+          if (dept.name === "IT Department" || dept.name?.includes("IT")) {
+            console.log("🔍 IT Department:", dept);
+            console.log("  - headPositionId:", dept.headPositionId);
+            console.log("  - All positions in dept:", deptPositions.map(p => ({ id: p._id, title: p.title })));
+          }
+
           const headPosition = deptPositions.find(
-            (pos) => pos._id === dept.headPositionId
+            (pos) => pos._id.toString() === dept.headPositionId?.toString()
           );
 
+          // Debug logging
+          if (dept.name === "IT Department" || dept.name?.includes("IT")) {
+            console.log("  - Head position found:", headPosition?.title || "NOT FOUND");
+            console.log("  - Comparing:", {
+              lookingFor: dept.headPositionId?.toString(),
+              positionIds: deptPositions.map(p => p._id.toString())
+            });
+          }
+
           const subordinatePositions = deptPositions.filter(
-            (pos) => pos._id !== dept.headPositionId
+            (pos) => pos._id.toString() !== dept.headPositionId?.toString()
           );
 
           const getEmployeeForPosition = (posId: string) =>
             employees.find((emp) => {
               const empPosId =
                 emp.primaryPositionId?._id || emp.primaryPositionId;
-              return empPosId === posId;
+              return empPosId?.toString() === posId?.toString();
             });
 
           return (
@@ -181,80 +199,78 @@ export default function OrganizationHierarchyPage() {
   const position = positions[0];
   const department = departments[0];
 
-  // 🔑 Employee reports to department head
-  const hasHead = Boolean(position.reportsToPositionId);
+  // 🔑 Check if we have a head employee (from API response)
+  const hasHead = Boolean(headEmployee && reportsTo);
+
+  // Check if current employee IS the head
+  const isEmployeeTheHead = headEmployee && employee._id === headEmployee._id;
 
   return (
     <div className="flex flex-col items-center space-y-10">
       {/* Department */}
       <h2 className="text-2xl font-bold">📁 {department.name}</h2>
 
-      {/* Department Head */}
-      {hasHead && headEmployee && (
-        <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
-          <h3 className="font-bold mb-1">
-            {(position.reportsToPositionId as any)?.title || "Department Head"}
-          </h3>
-          <p className="text-sm">
-            {headEmployee.firstName} {headEmployee.lastName}
-          </p>
-          <p className="text-xs italic opacity-80">
-            {headEmployee.employeeNumber}
-          </p>
+      {/* Department Head - Only show if employee is NOT the head */}
+      {hasHead && !isEmployeeTheHead && (
+        <>
+          <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
+            <h3 className="font-bold mb-1">
+              {reportsTo?.title || "Department Head"}
+            </h3>
+            <p className="text-sm">
+              {headEmployee.firstName} {headEmployee.lastName}
+            </p>
+            <p className="text-xs italic opacity-80">
+              {headEmployee.employeeNumber}
+            </p>
 
-          <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
-            HEAD
-          </span>
-        </div>
+            <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
+              HEAD
+            </span>
+          </div>
+          {/* Connection Line */}
+          <div className="w-0.5 h-10 bg-gray-400"></div>
+        </>
       )}
-
-      {hasHead && !headEmployee && (
-        <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
-          <h3 className="font-bold mb-1">Department Head</h3>
-          <p className="text-sm italic opacity-80">
-            (Position not yet assigned)
-          </p>
-
-          <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
-            HEAD
-          </span>
-        </div>
-      )}
-
-      {/* Connection Line */}
-      <div className="w-0.5 h-10 bg-gray-400"></div>
 
       {/* Logged-in Employee */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[240px] border-2 border-green-500">
-        <h4 className="font-semibold">{position.title}</h4>
+      <div className={`p-6 rounded-lg text-center min-w-[280px] relative ${
+        isEmployeeTheHead
+          ? 'bg-blue-600 text-white'
+          : 'bg-white dark:bg-gray-800 border-2 border-green-500'
+      }`}>
+        <h4 className="font-semibold text-lg">{position.title}</h4>
         <p className="text-sm">
-          {employee.firstName} {employee.lastName} <span className="text-green-600 font-bold">(You)</span>
+          {employee.firstName} {employee.lastName} <span className={`font-bold ${isEmployeeTheHead ? 'text-yellow-300' : 'text-green-600'}`}>(You)</span>
         </p>
-        <p className="text-xs text-gray-500">
+        <p className={`text-xs ${isEmployeeTheHead ? 'opacity-80' : 'text-gray-500'}`}>
           {employee.employeeNumber}
         </p>
+        {isEmployeeTheHead && (
+          <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
+            HEAD
+          </span>
+        )}
       </div>
 
-      {/* Colleagues */}
+      {/* Colleagues - Show horizontally next to employee */}
       {colleagues && colleagues.length > 0 && (
-        <>
-          <div className="text-center">
-            <h3 className="font-semibold text-lg mb-4">Your Colleagues</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {colleagues.map((colleague: any) => (
-                <div key={colleague._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[200px]">
-                  <h4 className="font-semibold">{colleague.primaryPositionId?.title || "Position"}</h4>
-                  <p className="text-sm">
-                    {colleague.firstName} {colleague.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {colleague.employeeNumber}
-                  </p>
-                </div>
-              ))}
-            </div>
+        <div className="w-full">
+          <h3 className="font-semibold text-lg mb-4 text-center">Your Colleagues</h3>
+          <div className="flex flex-wrap justify-center gap-4">
+            {colleagues.map((colleague: any) => (
+              <div key={colleague._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[200px] max-w-[250px]">
+                <h4 className="font-semibold">{colleague.primaryPositionId?.title || "Position"}</h4>
+                <p className="text-sm">
+                  {colleague.firstName} {colleague.lastName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {colleague.employeeNumber}
+                </p>
+              </div>
+            ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

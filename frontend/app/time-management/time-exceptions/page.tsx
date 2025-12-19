@@ -285,11 +285,11 @@ export default function TimeExceptionPage() {
         <div className="flex items-center justify-between">
           <div>
             <Link 
-              href="/time-management/attendance" 
+              href="/time-management/" 
               className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-300 group mb-4"
             >
               <FaArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
-              Back to Attendance Records
+              Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
@@ -403,7 +403,7 @@ export default function TimeExceptionPage() {
                       <div>
                         <div className="flex flex-wrap items-center gap-3 mb-2">
                           <h2 className="font-bold text-xl text-white">
-                            Request #{req._id.slice(-8)}
+                            Request #{req._id}
                           </h2>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(req.status)}`}>
                             {req.status}
@@ -415,11 +415,7 @@ export default function TimeExceptionPage() {
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <div className="flex items-center gap-2">
                             <FaUser className="text-xs" />
-                            Employee ID: {req.employeeId.toString().slice(-8)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <FaCalendarAlt className="text-xs" />
-                            {requestDate}
+                            Employee ID: {req.employeeId.toString()}
                           </div>
                         </div>
                       </div>

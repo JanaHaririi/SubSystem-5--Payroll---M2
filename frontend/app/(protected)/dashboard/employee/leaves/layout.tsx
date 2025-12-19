@@ -25,8 +25,8 @@ export default function EmployeeLeavesLayout({ children }: { children: ReactNode
     roles.includes('department head') ||
     roles.includes('hr employee') ||
     roles.includes('hr admin') ||
-    roles.includes('hr manager') ||
-    roles.includes('department manager');
+    roles.includes('hr manager');
+  
 
   useEffect(() => {
     if (loading) return;

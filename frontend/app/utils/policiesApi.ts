@@ -29,6 +29,11 @@ export const getPolicyById = async (id: string) => {
   return res.data;
 };
 
+export const getAllPolicies = async () => {
+  const res = await axiosInstance.get('/payroll-configuration/policies');
+  return res.data;
+};
+
 // HR Manager endpoints
 export const getAllPoliciesForHR = async () => {
   const res = await axiosInstance.get('/payroll-configuration/hr-manager/policies');

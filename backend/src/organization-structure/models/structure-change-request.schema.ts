@@ -11,8 +11,7 @@ export type StructureChangeRequestDocument =
 
 @Schema({ collection: 'structure_change_requests', timestamps: true })
 export class StructureChangeRequest {
-  @Prop({ type: Types.ObjectId, auto: true })
-  _id: Types.ObjectId;
+
 
   @Prop({ type: String, required: true, unique: true })
   requestNumber: string;

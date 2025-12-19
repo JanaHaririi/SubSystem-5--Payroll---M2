@@ -85,7 +85,7 @@ export default function EmployeeProfileManagementPage() {
             </Link>
           )}
 
-          {/* Department Manager - Team Profiles */}
+          {/* Department Head - Team Profiles */}
           {canViewTeam && (
             <Link href="/team-profiles">
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer border-2 border-purple-500">
@@ -94,10 +94,10 @@ export default function EmployeeProfileManagementPage() {
                   My Team Profiles
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  View non-sensitive, summarized profile data of direct reports (Department Managers)
+                  View non-sensitive, summarized profile data of direct reports (Department Heads)
                 </p>
                 <div className="mt-2 inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 text-xs font-semibold rounded-full">
-                  DEPARTMENT MANAGER
+                  DEPARTMENT HEAD
                 </div>
                 <div className="mt-4 inline-flex items-center text-purple-600 dark:text-purple-400 text-sm font-medium">
                   View Team →
@@ -140,7 +140,7 @@ export default function EmployeeProfileManagementPage() {
               <p className="text-sm text-blue-700 dark:text-blue-400">
                 <strong>Note:</strong> You can access "My Profile" directly from the navigation bar at the top of the page.
                 {canAccessAll && " As HR Admin/Manager, you have direct access to edit ANY employee profile field (PII, Pay Grade, Status, Hire Date)."}
-                {canViewTeam && !canAccessAll && " As a Department Manager, you can view non-sensitive, summarized profile data of your direct reports."}
+                {canViewTeam && !canAccessAll && " As a Department Head, you can view non-sensitive, summarized profile data of your direct reports."}
               </p>
             </div>
           </div>

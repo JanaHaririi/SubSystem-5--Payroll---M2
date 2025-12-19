@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Initial load: check if we’re logged in
+  // Initial load: check if we're logged in
   useEffect(() => {
     fetchMe();
   }, []);
@@ -112,8 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isHRAdmin =
       roles.includes("hr admin") || roles.includes("system admin");
     const isManager =
-      roles.includes("department head") || roles.includes("department_head") ||
-      roles.includes("department manager") || roles.includes("department_manager");
+      roles.includes("department head") || roles.includes("department_head");
+      
     const isEmployee = roles.includes("department employee");
     const isCandidate = roles.includes("job candidate");
 

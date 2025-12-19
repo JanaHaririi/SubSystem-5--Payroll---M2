@@ -435,6 +435,14 @@ export class PerformanceService {
             } catch (err) {
                 console.warn('Failed to populate departmentId:', err.message);
             }
+
+            try {
+                if (assignment.latestAppraisalId && Types.ObjectId.isValid(assignment.latestAppraisalId)) {
+                    (assignment as any).appraisalRecordId = await this.appraisalRecordModel.findById(assignment.latestAppraisalId).lean().exec();
+                }
+            } catch (err) {
+                console.warn('Failed to populate appraisalRecordId:', err.message);
+            }
         }
 
         return results as any;

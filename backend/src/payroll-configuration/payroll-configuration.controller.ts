@@ -110,7 +110,7 @@ export class PayrollConfigurationController {
 
   @Get('pay-grades')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getAllPayGrades() {
     return this.payrollConfigurationService.getAllPayGrades();
   }
@@ -443,35 +443,35 @@ export class PayrollConfigurationController {
 
   @Get('hr-manager/insurance-brackets')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async getAllInsuranceBracketsForHR() {
     return this.payrollConfigurationService.findAllInsuranceBrackets();
   }
 
   @Get('hr-manager/insurance-brackets/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async getInsuranceBracketForHR(@Param('id') id: string) {
     return this.payrollConfigurationService.findInsuranceBrackets(id);
   }
 
   @Get('hr-manager/policies')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async getAllPoliciesForHR(): Promise<payrollPoliciesDocument[]> {
     return this.payrollConfigurationService.findAllPolicies();
   }
 
   @Get('hr-manager/policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async getPolicyForHR(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.findById(id);
   }
 
   @Post('approve/insurance/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async approveInsurance(@Param('id') id: string, @Req() req: Request) {
     const user: any = req['user'];
     return this.payrollConfigurationService.hrApproveInsurance(id, user.employeeId);
@@ -479,7 +479,7 @@ export class PayrollConfigurationController {
 
   @Post('reject/insurance/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async rejectInsurance(@Param('id') id: string, @Req() req: Request) {
     const user: any = req['user'];
     return this.payrollConfigurationService.hrRejectInsurance(id, user.employeeId);
@@ -487,7 +487,7 @@ export class PayrollConfigurationController {
 
   @Post('approve/policy/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async approvePolicy(@Param('id') id: string, @Req() req: Request) {
     const user: any = req['user'];
     return this.payrollConfigurationService.hrApprovePolicy(id, user.employeeId);
@@ -495,7 +495,7 @@ export class PayrollConfigurationController {
 
   @Post('reject/policy/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
   async rejectPolicy(@Param('id') id: string, @Req() req: Request) {
     const user: any = req['user'];
     return this.payrollConfigurationService.hrRejectPolicy(id, user.employeeId);

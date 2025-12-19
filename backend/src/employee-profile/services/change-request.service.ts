@@ -63,12 +63,20 @@ export class ChangeRequestService {
 
     const savedRequest = await newRequest.save();
 
-    // Send notification to HR about new change request
-    await this.notificationLogService.sendNotification({
-      to: new Types.ObjectId(employeeId),
-      type: 'Profile Change Request Submitted',
-      message: `A new profile change request has been submitted for review. Reason: ${createDto.reason}`,
-    });
+    // Send notification to HR Admin/Manager about new change request from employee
+    const hrAdmins = await this.employeeProfileModel.find({
+      roles: { $in: ['HR Admin', 'HR Manager', 'hr admin', 'hr manager', 'HR_ADMIN', 'HR_MANAGER'] }
+    }).select('_id');
+
+    console.log(`📧 Sending notification to ${hrAdmins.length} HR Admin/Manager(s)`);
+
+    for (const admin of hrAdmins) {
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(admin._id.toString()),
+        type: 'New Profile Change Request',
+        message: `A new profile change request has been submitted by an employee. Reason: ${createDto.reason}. Please review and process.`,
+      });
+    }
 
     return savedRequest;
   }

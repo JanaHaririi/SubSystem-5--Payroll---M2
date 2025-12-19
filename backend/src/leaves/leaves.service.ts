@@ -711,32 +711,32 @@ export class LeavesService {
         unpaidDays = durationDays;
       }
     }
-// ===============================
-// IRREGULAR PATTERN DETECTION
-// ===============================
+    // ===============================
+    // IRREGULAR PATTERN DETECTION
+    // ===============================
 
-// Define current month range (based on leave start date)
-const startOfMonth = new Date(from.getFullYear(), from.getMonth(), 1);
-const endOfMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0);
+    // Define current month range (based on leave start date)
+    const startOfMonth = new Date(from.getFullYear(), from.getMonth(), 1);
+    const endOfMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0);
 
-// Count how many leave requests this employee submitted this month
-const monthlyRequestCount = await this.requestModel.countDocuments({
-  employeeId: employeeObjectId,
-  createdAt: {
-    $gte: startOfMonth,
-    $lte: endOfMonth,
-  },
-});
+    // Count how many leave requests this employee submitted this month
+    const monthlyRequestCount = await this.requestModel.countDocuments({
+      employeeId: employeeObjectId,
+      createdAt: {
+        $gte: startOfMonth,
+        $lte: endOfMonth,
+      },
+    });
 
-// Rule: more than 3 leave requests in the same month
-const FREQUENT_REQUEST_THRESHOLD = 3;
-const frequentLeaveFlag = monthlyRequestCount >= FREQUENT_REQUEST_THRESHOLD;
+    // Rule: more than 3 leave requests in the same month
+    const FREQUENT_REQUEST_THRESHOLD = 3;
+    const frequentLeaveFlag = monthlyRequestCount >= FREQUENT_REQUEST_THRESHOLD;
 
-// Final irregular flag:
-// - unpaid days
-// - OR too many requests in same month
-const irregularPatternFlag =
-  unpaidDays > 0 || frequentLeaveFlag;
+    // Final irregular flag:
+    // - unpaid days
+    // - OR too many requests in same month
+    const irregularPatternFlag =
+      unpaidDays > 0 || frequentLeaveFlag;
 
     const departmentId = employeeProfile.primaryDepartmentId;
     if (departmentId) {
@@ -804,7 +804,7 @@ const irregularPatternFlag =
       // Find and notify manager
       const manager = await this.employeeModel.findOne({
         primaryDepartmentId: employeeProfile.primaryDepartmentId,
-        systemRole: { $in: ['Manager', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD'] },
+        systemRole: { $in: ['Manager', SystemRole.DEPARTMENT_HEAD] },
       });
 
       if (manager) {
@@ -1048,10 +1048,10 @@ const irregularPatternFlag =
     // 6. Map workflow role to actual roles (flexible mapping)
     // Since roles are lowercase with spaces, we need flexible matching
     const roleMapping: Record<string, string[]> = {
-      'Manager': ['manager', 'department manager', 'hr manager'],
+      'Manager': ['manager', 'department head', 'hr manager'], // Changed  to 'department head'
       'Department Head': ['department head', 'head'],
       'HR': ['hr admin', 'hr employee', 'hr'],
-      'Department Manager': ['department manager', 'manager'],
+      
     };
 
     const allowedRolePatterns = roleMapping[currentStepRole] || [currentStepRole.toLowerCase()];
@@ -1269,7 +1269,7 @@ const irregularPatternFlag =
       if (employeeProfile?.primaryDepartmentId) {
         const manager = await this.employeeModel.findOne({
           primaryDepartmentId: employeeProfile.primaryDepartmentId,
-          systemRole: { $in: ['Manager', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD'] },
+          systemRole: { $in: ['Manager', SystemRole.DEPARTMENT_HEAD] },
         });
 
         if (manager) {

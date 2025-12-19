@@ -77,10 +77,7 @@ export default function TeamProfilesPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             My Team Profiles
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            View your direct reports' profiles (US-E4-01, US-E4-02) – Sensitive
-            information is excluded per BR 18b
-          </p>
+          
         </div>
 
         {/* Team Summary */}
@@ -218,11 +215,7 @@ export default function TeamProfilesPage() {
 
         {/* Privacy Notice */}
         <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 rounded">
-          <p className="text-sm text-yellow-700 dark:text-yellow-400">
-            <strong>Privacy Note (BR 18b):</strong> Sensitive information such as
-            salary, national ID, and personal financial data is excluded from
-            this view per privacy policies.
-          </p>
+         
         </div>
 
         {/* Back Button */}

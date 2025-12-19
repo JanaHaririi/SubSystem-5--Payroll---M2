@@ -116,12 +116,26 @@ export default function CreateEmployeePage() {
 
       // Try to fetch pay grades, but don't fail if endpoint doesn't exist
       try {
+        console.log("📊 Fetching pay grades...");
         const payGradeResponse = await axiosInstance.get("/payroll-configuration/pay-grades");
+        console.log("📊 Pay grades response:", payGradeResponse.data);
         const validPayGrades = (payGradeResponse.data || []).filter((pg: PayGrade) => pg._id && pg.grade);
+        console.log("✅ Valid pay grades:", validPayGrades.length);
         setPayGrades(validPayGrades);
-      } catch (pgError) {
-        console.warn("Pay grades endpoint not available:", pgError);
+
+        if (validPayGrades.length === 0) {
+          console.warn("⚠️ No pay grades found in database");
+          toast.error("No pay grades found. Please create pay grades first.", {
+            duration: 4000,
+          });
+        }
+      } catch (pgError: any) {
+        console.error("❌ Pay grades fetch error:", pgError);
+        console.error("❌ Error details:", pgError.response?.data || pgError.message);
         setPayGrades([]);
+        toast.error("Failed to load pay grades. The dropdown may be empty.", {
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error("Error fetching departments and positions:", error);

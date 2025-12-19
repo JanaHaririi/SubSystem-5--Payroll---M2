@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from '@/app/recruitment/component/shared-hr-styles.module.css';
 import axiosInstance from "@/app/utils/ApiClient";
+import { useAuth } from "@/app/(system)/context/authContext";
 
 type Notification = {
   _id: string;
@@ -23,21 +24,58 @@ export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
+    
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadNotifications();
-    // Load read IDs from localStorage
-    const savedReadIds = localStorage.getItem('readNotificationIds');
-    if (savedReadIds) {
-      setReadIds(new Set(JSON.parse(savedReadIds)));
-    }
-  }, []);
+    const fetchUserAndNotifications = async () => {
+      try {
+        const userResponse = await axiosInstance.get("/auth/me");
+        console.log("✅ /auth/me response:", userResponse.data);
+        
+        const userData = userResponse.data;
+        
+        const extractedUserId = userData.userid  // ← Your API uses lowercase 'userid'
+                        || userData._id 
+                        || userData.userId 
+                        || userData.id
+                        || userData.user?._id
+                        || userData.user?.userId
+                        || userData.user?.id;
 
-  const loadNotifications = async () => {
+        if (!extractedUserId) {
+          setError("User ID not found");
+          setLoading(false);
+          return;
+        }
+
+        setUserId(extractedUserId);
+        
+        // Load notifications
+        await loadNotifications(extractedUserId);
+        
+        // Load read IDs from localStorage
+        const savedReadIds = localStorage.getItem('readNotificationIds');
+        if (savedReadIds) {
+          setReadIds(new Set(JSON.parse(savedReadIds)));
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch user:", err);
+        setError(err.response?.data?.message || "Failed to fetch user data");
+        setLoading(false);
+      }
+    };
+
+    fetchUserAndNotifications();
+  }, []); // Empty dependency array - runs once on mount
+
+  const loadNotifications = async (id: string) => {
     setLoading(true);
     setError(null);
+    
     try {
-      const response = await axiosInstance.get("/time-management/notification-log");
+      const response = await axiosInstance.get(`/time-management/notification-log/employee/${id}`);
       const notifData = Array.isArray(response.data) 
         ? response.data 
         : response.data?.data || [];
@@ -99,7 +137,7 @@ export default function NotificationsPage() {
 
         <div className={styles.actions}>
           <button
-            onClick={loadNotifications}
+            onClick={() => loadNotifications(userId!)}
             className={styles.button}
           >
             🔄 Refresh
@@ -134,7 +172,7 @@ export default function NotificationsPage() {
               minWidth: '120px'
             }}
           >
-            {filterType} {filterType === 'unread' && unreadCount > 0 && `(${unreadCount})`}
+            {filterType} {filterType === 'unread' && unreadCount > 0 && (`${unreadCount}`)}
           </button>
         ))}
       </div>
@@ -190,7 +228,7 @@ export default function NotificationsPage() {
       {/* Error Message */}
       {error && (
         <div className={styles.errorBanner}>
-          <p>⚠️ {error}</p>
+          <p>⚠ {error}</p>
         </div>
       )}
 

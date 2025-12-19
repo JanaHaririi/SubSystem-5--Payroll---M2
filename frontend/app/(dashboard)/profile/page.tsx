@@ -49,9 +49,31 @@ interface EmployeeProfile {
   bankAccountNumber?: string;
 }
 
+interface Appraisal {
+  _id: string;
+  cycleId: {
+    _id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  };
+  appraisalRecordId?: {
+    _id: string;
+    totalScore?: number;
+    overallRatingLabel?: string;
+    strengths?: string;
+    improvementAreas?: string;
+    managerSummary?: string;
+    hrPublishedAt?: string;
+  };
+  status: string;
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
+  const [appraisals, setAppraisals] = useState<Appraisal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAppraisals, setLoadingAppraisals] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editBioMode, setEditBioMode] = useState(false);
   const [biography, setBiography] = useState("");
@@ -87,10 +109,34 @@ export default function ProfilePage() {
           country: response.data.address?.country || "",
         },
       });
+
+      // Fetch appraisals after profile is loaded
+      if (response.data._id) {
+        fetchAppraisals(response.data._id);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAppraisals = async (employeeProfileId: string) => {
+    try {
+      setLoadingAppraisals(true);
+      const response = await axiosInstance.get(`/performance/employees/${employeeProfileId}/appraisals`);
+      console.log("📊 Appraisals response:", response.data);
+
+      // Filter for appraisals with records (regardless of status for now)
+      const appraisalsWithRecords = response.data.filter(
+        (appraisal: Appraisal) => appraisal.appraisalRecordId
+      );
+      console.log("✅ Appraisals with records:", appraisalsWithRecords);
+      setAppraisals(appraisalsWithRecords);
+    } catch (error) {
+      console.error("Error fetching appraisals:", error);
+    } finally {
+      setLoadingAppraisals(false);
     }
   };
 
@@ -310,28 +356,80 @@ export default function ProfilePage() {
       {/* Performance Appraisal */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Performance Appraisal</h2>
-        {profile.lastAppraisalDate ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm text-neutral-400">Last Appraisal Date</label>
-              <p className="text-white">
-                {new Date(profile.lastAppraisalDate).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm text-neutral-400">Score</label>
-              <p className="text-white text-2xl font-bold">
-                {profile.lastAppraisalScore?.toFixed(2) || "N/A"}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm text-neutral-400">Rating</label>
-              <p className="text-white">
-                <span className="inline-block px-3 py-1 rounded bg-blue-900 text-blue-300 font-medium">
-                  {profile.lastAppraisalRatingLabel || "N/A"}
-                </span>
-              </p>
-            </div>
+        {loadingAppraisals ? (
+          <p className="text-neutral-400">Loading appraisals...</p>
+        ) : appraisals.length > 0 ? (
+          <div className="space-y-6">
+            {appraisals.map((appraisal) => (
+              <div key={appraisal._id} className="border border-neutral-700 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {appraisal.cycleId.name}
+                    </h3>
+                    <p className="text-sm text-neutral-400">
+                      {new Date(appraisal.cycleId.startDate).toLocaleDateString()} - {new Date(appraisal.cycleId.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className="inline-block px-3 py-1 rounded bg-green-900 text-green-300 text-sm font-medium">
+                    {appraisal.status}
+                  </span>
+                </div>
+
+                {appraisal.appraisalRecordId && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {appraisal.appraisalRecordId.totalScore !== undefined && (
+                      <div>
+                        <label className="text-sm text-neutral-400">Total Score</label>
+                        <p className="text-white text-2xl font-bold">
+                          {appraisal.appraisalRecordId.totalScore.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                    {appraisal.appraisalRecordId.overallRatingLabel && (
+                      <div>
+                        <label className="text-sm text-neutral-400">Rating</label>
+                        <p className="text-white">
+                          <span className="inline-block px-3 py-1 rounded bg-blue-900 text-blue-300 font-medium">
+                            {appraisal.appraisalRecordId.overallRatingLabel}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.strengths && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Strengths</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.strengths}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.improvementAreas && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Areas for Improvement</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.improvementAreas}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.managerSummary && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Manager Summary</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.managerSummary}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.hrPublishedAt && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Published On</label>
+                        <p className="text-white">
+                          {new Date(appraisal.appraisalRecordId.hrPublishedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-neutral-400">No appraisal history available yet.</p>

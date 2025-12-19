@@ -334,6 +334,7 @@ async activatePosition(id: string) {
     }
   }
 
+
   // ======================
   // 📌 GET ALL CHANGE REQUESTS (Admin only)
   // ======================
@@ -606,6 +607,17 @@ async activatePosition(id: string) {
 
     console.log("👥 Total employees with positions found:", employees.length);
 
+    // Debug: Check for specific employee
+    const emp1234 = await this.employeeProfileModel.findOne({ employeeNumber: 'emp1234' }).exec();
+    if (emp1234) {
+      console.log("🔍 emp1234 found:");
+      console.log("  - primaryPositionId:", emp1234.primaryPositionId);
+      console.log("  - primaryDepartmentId:", emp1234.primaryDepartmentId);
+      console.log("  - Name:", emp1234.fullName || `${emp1234.firstName} ${emp1234.lastName}`);
+    } else {
+      console.log("⚠️ emp1234 not found in database");
+    }
+
     // Transform to plain objects with populated position data
     const populatedEmployees = employees.map(emp => ({
       _id: emp._id,
@@ -704,49 +716,121 @@ async getMyStructure(employeeId: string) {
     .exec();
 
   console.log("🏷️ Position:", position?.title);
-  console.log("🔗 Reports to:", position?.reportsToPositionId);
+  console.log("🔗 Position's reportsToPositionId field:", position?.reportsToPositionId);
 
-  // Find the employee who holds the head position (reportsTo position)
-  let headEmployee: EmployeeProfileDocument | null = null;
+  // Determine the head position ID
+  // If position has reportsToPositionId, use it; otherwise use department's headPositionId
+  let headPositionId: any = null;
+
   if (position?.reportsToPositionId) {
     const reportsTo = position.reportsToPositionId as any;
-    const headPositionId = reportsTo._id || position.reportsToPositionId;
-    
-    headEmployee = await this.employeeProfileModel.findOne({
-      primaryPositionId: headPositionId
-    }).exec();
-    
-    console.log("👔 Head position employee:", headEmployee?.fullName);
+    headPositionId = reportsTo._id || position.reportsToPositionId;
+    console.log("✅ Using position's reportsTo:", headPositionId);
+  } else if (employeeDoc.primaryDepartmentId?.headPositionId) {
+    // Use department head position if position doesn't have reportsTo
+    const dept = employeeDoc.primaryDepartmentId as any;
+    headPositionId = dept.headPositionId;
+    console.log("✅ Using department head position instead:", headPositionId);
   }
 
-  // Find colleagues who report to the same head position
-  let colleagues: EmployeeProfileDocument[] = [];
-  if (position?.reportsToPositionId) {
-    const reportsTo = position.reportsToPositionId as any;
-    const headPositionId = reportsTo._id || position.reportsToPositionId;
-    
-    // Find all positions that report to the same head position
-    const peerPositions = await this.positionModel.find({
-      reportsToPositionId: headPositionId,
-      _id: { $ne: employeeDoc.primaryPositionId } // Exclude the current employee's position
-    }).exec();
+  console.log("📍 FINAL headPositionId to use:", headPositionId);
 
-    // Find employees in those peer positions
-    const peerPositionIds = peerPositions.map(p => p._id);
-    colleagues = await this.employeeProfileModel.find({
-      primaryPositionId: { $in: peerPositionIds }
+  // Find the employee who holds the head position
+  let headEmployee: EmployeeProfileDocument | null = null;
+  if (headPositionId) {
+    console.log("🔍 Searching for employee with primaryPositionId:", headPositionId);
+
+    // Search for both ObjectId and string versions
+    headEmployee = await this.employeeProfileModel.findOne({
+      $or: [
+        { primaryPositionId: headPositionId },
+        { primaryPositionId: headPositionId.toString() }
+      ]
     }).populate('primaryPositionId').exec();
 
-    console.log("👥 Found colleagues:", colleagues.length);
+    if (headEmployee) {
+      console.log("👔 Head position employee found:", headEmployee.fullName || `${headEmployee.firstName} ${headEmployee.lastName}`);
+      console.log("👔 Employee's primaryPositionId:", headEmployee.primaryPositionId);
+    } else {
+      console.warn("⚠️ No employee found holding head position ID:", headPositionId);
+
+      // Debug: Show all employees in this department to help troubleshoot
+      const deptId = employeeDoc.primaryDepartmentId?._id || employeeDoc.primaryDepartmentId;
+      if (deptId) {
+        const deptEmployees = await this.employeeProfileModel.find({
+          primaryDepartmentId: deptId
+        }).select('fullName firstName lastName primaryPositionId').exec();
+
+        console.log("📊 All employees in this department:");
+        deptEmployees.forEach(emp => {
+          const name = emp.fullName || `${emp.firstName} ${emp.lastName}`;
+          console.log(`   - ${name}: primaryPositionId = ${emp.primaryPositionId} (type: ${typeof emp.primaryPositionId})`);
+        });
+      }
+    }
+  }
+
+  // Find colleagues in the same department (excluding the current employee)
+  let colleagues: EmployeeProfileDocument[] = [];
+  if (employeeDoc.primaryDepartmentId?._id) {
+    const dept = employeeDoc.primaryDepartmentId as any;
+    const departmentId = dept._id;
+
+    console.log("🔍 Searching for colleagues in department:", departmentId);
+
+    // Find all positions in the same department
+    const departmentPositions = await this.positionModel.find({
+      departmentId: departmentId,
+      isActive: true
+    }).exec();
+
+    const positionIds = departmentPositions.map(p => p._id);
+    console.log("📋 Found positions in department:", positionIds.length);
+    departmentPositions.forEach(pos => {
+      console.log(`   - Position: ${pos.title} (${pos._id})`);
+    });
+
+    // Convert position IDs to strings for comparison (in case they're stored as strings)
+    const positionIdStrings = positionIds.map(id => id.toString());
+
+    // Check ALL employees who have ANY of these positions (for debugging)
+    const allEmployeesInPositions = await this.employeeProfileModel.find({
+      $or: [
+        { primaryPositionId: { $in: positionIds } },
+        { primaryPositionId: { $in: positionIdStrings } }
+      ]
+    }).exec();
+    console.log("🔍 Total employees in these positions (including current user):", allEmployeesInPositions.length);
+    allEmployeesInPositions.forEach(emp => {
+      console.log(`   - ${emp.fullName} (${emp._id}) - Position: ${emp.primaryPositionId} (type: ${typeof emp.primaryPositionId})`);
+    });
+
+    // Find employees holding those positions (excluding current employee)
+    colleagues = await this.employeeProfileModel.find({
+      $or: [
+        { primaryPositionId: { $in: positionIds } },
+        { primaryPositionId: { $in: positionIdStrings } }
+      ],
+      _id: { $ne: employeeId } // Exclude the current employee
+    })
+    .populate('primaryPositionId')
+    .select('_id firstName lastName fullName employeeNumber primaryPositionId')
+    .exec();
+
+    console.log("👥 Found colleagues in department (excluding current user):", colleagues.length);
+    colleagues.forEach(col => {
+      const name = col.fullName || `${col.firstName || ''} ${col.lastName || ''}`.trim() || 'Unnamed';
+      console.log(`   - ${name} (Position: ${(col.primaryPositionId as any)?.title})`);
+    });
   }
 
   return {
     employee,
     position,
     department: employee.primaryDepartmentId,
-    reportsTo: position?.reportsToPositionId,
+    reportsTo: headPositionId ? await this.positionModel.findById(headPositionId).exec() : null,
     headEmployee, // Employee who holds the head position
-    colleagues, // Colleagues under the same head position
+    colleagues, // All colleagues in the same department
   };
 }
 }

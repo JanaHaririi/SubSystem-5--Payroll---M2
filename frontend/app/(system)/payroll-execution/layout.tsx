@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FiHome, FiList, FiPlusCircle, FiTool, FiFileText } from "react-icons/fi";
 
 export default function PayrollExecutionLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // const links = [
-  //   { href: "/home", label: "Home" },
-  //   { href: "/payroll-execution/runs", label: "Runs" },
-  //   { href: "/payroll-execution/runs/new", label: "Create Run" },
-  //   { href: "/payroll-execution/pre-run", label: "Pre-Run (HR Events)" },
-  //   { href: "/payroll-execution/payslips", label: "Payslips" },
-  // ];
+  const links = [
+    { href: "/home", label: "Home", icon: <FiHome /> },
+    { href: "/payroll-execution/runs", label: "Runs", icon: <FiList /> },
+    { href: "/payroll-execution/runs/new", label: "Create Run", icon: <FiPlusCircle /> },
+    { href: "/payroll-execution/pre-run", label: "Pre-Run (HR Events)", icon: <FiTool /> },
+    { href: "/payroll-execution/payslips", label: "Payslips", icon: <FiFileText /> },
+  ];
 
   return (
     //<div style={{ padding: 24 }}>
@@ -29,17 +30,17 @@ export default function PayrollExecutionLayout({ children }: { children: React.R
       }}
        >
         <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Payroll Execution</h1>
-      {/* <nav
+      <nav
         style={{
           display: "flex",
-          gap: 16,
+          gap: 12,
           marginBottom: 20,
           flexWrap: "wrap",
-          borderBottom: "1px solid #e5e7eb",
-          paddingBottom: 8,
+          borderBottom: "1px solid #1f2937",
+          paddingBottom: 10,
         }}
       >
-        {links.map(({ href, label }) => {
+        {links.map(({ href, label, icon }) => {
           const isActive = mounted && (pathname === href || (href !== "/home" && pathname?.startsWith(href)));
           return (
             <Link
@@ -48,19 +49,22 @@ export default function PayrollExecutionLayout({ children }: { children: React.R
               aria-current={isActive ? "page" : undefined}
               style={{
                 fontSize: 14,
-                padding: "6px 10px",
-                borderRadius: 6,
-                textDecoration: isActive ? "none" : "none",
-                background: isActive ? "#f3f4f6" : "transparent",
-                color: isActive ? "#111827" : "#374151",
-                border: isActive ? "1px solid #e5e7eb" : "1px solid transparent",
+                padding: "8px 12px",
+                borderRadius: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: isActive ? "#0b1224" : "transparent",
+                color: isActive ? "#e5e7eb" : "#cbd5e1",
+                border: isActive ? "1px solid #2a3b5f" : "1px solid #23304d",
               }}
             >
-              {label}
+              <span style={{ fontSize: 16, display: "flex" }}>{icon}</span>
+              <span>{label}</span>
             </Link>
           );
         })}
-      </nav> */}
+      </nav>
 
       <div>{children}</div>
     </div>

@@ -41,7 +41,7 @@ import { Delegation, DelegationSchema } from './models/delegation.schema';
       { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
       { name: Delegation.name, schema: DelegationSchema },
     ]),
-    forwardRef(()=>TimeManagementModule), // For NotificationLogService
+    forwardRef(() => TimeManagementModule), // For NotificationLogService
     ScheduleModule.forRoot(), // For cron jobs
   ],
   controllers: [LeavesController],
