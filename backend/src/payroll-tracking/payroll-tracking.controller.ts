@@ -19,9 +19,11 @@ import { UpdateRefundStatusDto } from './dto/update-refund-status.dto';
 
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimStatusDto } from './dto/update-claim-status.dto';
+import { UpdateClaimReviewDto } from './dto/update-claim-review.dto';
 
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeStatusDto } from './dto/update-dispute-status.dto';
+import { UpdateDisputeReviewDto } from './dto/update-dispute-review.dto';
 
 // AUTH GUARDS
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -30,6 +32,10 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 // ROLES ENUM
 import { SystemRole } from '../employee-profile/enums/employee-profile.enums';
+import {
+  ClaimReviewStatus,
+  DisputeReviewStatus,
+} from './enums/payroll-tracking-enum';
 
 @Controller('payroll-tracking')
 @UseGuards(AuthGuard, RolesGuard)
@@ -116,18 +122,34 @@ export class PayrollTrackingController {
   @Patch('claims/:id/approve')
   approveClaim(
     @Param('id') claimId: string,
-    @Body() dto: UpdateClaimStatusDto,
+    @Body() dto: UpdateClaimReviewDto,
+    @Req() req: Request,
   ) {
-    return this.payrollTrackingService.updateClaimStatus(claimId, dto);
+    return this.payrollTrackingService.recommendClaimStatus(
+      claimId,
+      {
+        ...dto,
+        reviewStatus: ClaimReviewStatus.RECOMMEND_APPROVE,
+      },
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
   }
 
   @Roles(SystemRole.PAYROLL_SPECIALIST)
   @Patch('claims/:id/reject')
   rejectClaim(
     @Param('id') claimId: string,
-    @Body() dto: UpdateClaimStatusDto,
+    @Body() dto: UpdateClaimReviewDto,
+    @Req() req: Request,
   ) {
-    return this.payrollTrackingService.updateClaimStatus(claimId, dto);
+    return this.payrollTrackingService.recommendClaimStatus(
+      claimId,
+      {
+        ...dto,
+        reviewStatus: ClaimReviewStatus.RECOMMEND_REJECT,
+      },
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
   }
 
   @Roles(SystemRole.PAYROLL_SPECIALIST)
@@ -136,22 +158,82 @@ export class PayrollTrackingController {
     return this.payrollTrackingService.getPendingDisputes();
   }
 
+  /* ============================================================
+     PAYROLL MANAGER – FINAL APPROVAL
+  ============================================================ */
+
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  @Get('claims/awaiting-final')
+  getClaimsAwaitingFinal() {
+    return this.payrollTrackingService.getClaimsAwaitingFinal();
+  }
+
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  @Patch('claims/:id/final')
+  finalizeClaim(
+    @Param('id') claimId: string,
+    @Body() dto: UpdateClaimStatusDto,
+    @Req() req: Request,
+  ) {
+    return this.payrollTrackingService.updateClaimStatus(
+      claimId,
+      dto,
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
+  }
+
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  @Get('disputes/awaiting-final')
+  getDisputesAwaitingFinal() {
+    return this.payrollTrackingService.getDisputesAwaitingFinal();
+  }
+
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  @Patch('disputes/:id/final')
+  finalizeDispute(
+    @Param('id') disputeId: string,
+    @Body() dto: UpdateDisputeStatusDto,
+    @Req() req: Request,
+  ) {
+    return this.payrollTrackingService.updateDisputeStatus(
+      disputeId,
+      dto,
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
+  }
+
   @Roles(SystemRole.PAYROLL_SPECIALIST)
   @Patch('disputes/:id/approve')
   approveDispute(
     @Param('id') disputeId: string,
-    @Body() dto: UpdateDisputeStatusDto,
+    @Body() dto: UpdateDisputeReviewDto,
+    @Req() req: Request,
   ) {
-    return this.payrollTrackingService.updateDisputeStatus(disputeId, dto);
+    return this.payrollTrackingService.recommendDisputeStatus(
+      disputeId,
+      {
+        ...dto,
+        reviewStatus: DisputeReviewStatus.RECOMMEND_APPROVE,
+      },
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
   }
 
   @Roles(SystemRole.PAYROLL_SPECIALIST)
   @Patch('disputes/:id/reject')
   rejectDispute(
     @Param('id') disputeId: string,
-    @Body() dto: UpdateDisputeStatusDto,
+    @Body() dto: UpdateDisputeReviewDto,
+    @Req() req: Request,
   ) {
-    return this.payrollTrackingService.updateDisputeStatus(disputeId, dto);
+    return this.payrollTrackingService.recommendDisputeStatus(
+      disputeId,
+      {
+        ...dto,
+        reviewStatus: DisputeReviewStatus.RECOMMEND_REJECT,
+      },
+      (req as any)?.user?.employeeId || (req as any)?.user?._id,
+    );
   }
 
   /* ============================================================

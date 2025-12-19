@@ -2,7 +2,7 @@
 import { Prop, Schema, SchemaFactory, } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import {  EmployeeProfile as Employee} from '../../employee-profile/models/employee-profile.schema';
-import { DisputeStatus } from '../enums/payroll-tracking-enum';
+import { DisputeReviewStatus, DisputeStatus } from '../enums/payroll-tracking-enum';
 
 export type disputesDocument = HydratedDocument<disputes>
 
@@ -33,6 +33,24 @@ export class disputes {
 
     @Prop()
     resolutionComment?: string;
+
+    @Prop({ required: true, type: String, enum: DisputeReviewStatus, default: DisputeReviewStatus.PENDING })
+    reviewStatus: DisputeReviewStatus;
+
+    @Prop()
+    reviewComment?: string;
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
+    reviewBy?: mongoose.Types.ObjectId;
+
+    @Prop()
+    reviewAt?: Date;
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
+    finalBy?: mongoose.Types.ObjectId;
+
+    @Prop()
+    finalAt?: Date;
 }
 
 export const disputesSchema = SchemaFactory.createForClass(disputes);

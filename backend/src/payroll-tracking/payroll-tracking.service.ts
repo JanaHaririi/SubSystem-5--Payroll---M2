@@ -10,9 +10,11 @@ import { refunds } from './models/refunds.schema';
 // DTOs
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimStatusDto } from './dto/update-claim-status.dto';
+import { UpdateClaimReviewDto } from './dto/update-claim-review.dto';
 
 import { CreateDisputeDto } from './dto/create-dispute.dto';
 import { UpdateDisputeStatusDto } from './dto/update-dispute-status.dto';
+import { UpdateDisputeReviewDto } from './dto/update-dispute-review.dto';
 
 import { CreateRefundDto } from './dto/create-refund.dto';
 import { UpdateRefundStatusDto } from './dto/update-refund-status.dto';
@@ -20,7 +22,9 @@ import { UpdateRefundStatusDto } from './dto/update-refund-status.dto';
 // Enums
 import {
   ClaimStatus,
+  ClaimReviewStatus,
   DisputeStatus,
+  DisputeReviewStatus,
   RefundStatus,
 } from './enums/payroll-tracking-enum';
 
@@ -67,6 +71,7 @@ export class PayrollTrackingService {
       claimType: dto.claimType,
       amount: dto.amount,
       employeeId: employeeObjectId,
+      reviewStatus: ClaimReviewStatus.PENDING,
       status: ClaimStatus.UNDER_REVIEW,
     });
 
@@ -76,24 +81,61 @@ export class PayrollTrackingService {
   /** PAYROLL SPECIALIST – list pending claims */
   async getPendingClaims() {
     return this.claimModel
-      .find({ status: ClaimStatus.UNDER_REVIEW })
+      .find({ reviewStatus: ClaimReviewStatus.PENDING })
       .exec();
   }
 
-  /** PAYROLL SPECIALIST – update claim status */
+  /** PAYROLL SPECIALIST – recommend claim status */
+  async recommendClaimStatus(
+    claimMongoId: string,
+    dto: UpdateClaimReviewDto,
+    reviewerId?: string,
+  ) {
+    return this.claimModel.findByIdAndUpdate(
+      claimMongoId,
+      {
+        reviewStatus: dto.reviewStatus,
+        reviewComment: dto.reviewComment,
+        reviewBy: reviewerId ? new Types.ObjectId(reviewerId) : undefined,
+        reviewAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { new: true },
+    );
+  }
+
+  /** PAYROLL MANAGER – final approve/reject claim */
   async updateClaimStatus(
     claimMongoId: string,
     dto: UpdateClaimStatusDto,
+    managerId?: string,
   ) {
     return this.claimModel.findByIdAndUpdate(
       claimMongoId,
       {
         status: dto.status,
         resolutionComment: dto.resolutionComment,
+        finalBy: managerId ? new Types.ObjectId(managerId) : undefined,
+        finalAt: new Date(),
         updatedAt: new Date(),
       },
       { new: true },
     );
+  }
+
+  /** PAYROLL MANAGER – items awaiting final decision */
+  async getClaimsAwaitingFinal() {
+    return this.claimModel
+      .find({
+        reviewStatus: {
+          $in: [
+            ClaimReviewStatus.RECOMMEND_APPROVE,
+            ClaimReviewStatus.RECOMMEND_REJECT,
+          ],
+        },
+        status: ClaimStatus.UNDER_REVIEW,
+      })
+      .exec();
   }
 
   /* ============================================================
@@ -123,6 +165,7 @@ export class PayrollTrackingService {
     const created = new this.disputeModel({
       ...dto,
       employeeId: employeeObjectId,
+      reviewStatus: DisputeReviewStatus.PENDING,
       status: DisputeStatus.UNDER_REVIEW,
     });
 
@@ -132,24 +175,61 @@ export class PayrollTrackingService {
   /** PAYROLL SPECIALIST – list pending disputes */
   async getPendingDisputes() {
     return this.disputeModel
-      .find({ status: DisputeStatus.UNDER_REVIEW })
+      .find({ reviewStatus: DisputeReviewStatus.PENDING })
       .exec();
   }
 
-  /** PAYROLL SPECIALIST – update dispute status */
+  /** PAYROLL SPECIALIST – recommend dispute status */
+  async recommendDisputeStatus(
+    disputeMongoId: string,
+    dto: UpdateDisputeReviewDto,
+    reviewerId?: string,
+  ) {
+    return this.disputeModel.findByIdAndUpdate(
+      disputeMongoId,
+      {
+        reviewStatus: dto.reviewStatus,
+        reviewComment: dto.reviewComment,
+        reviewBy: reviewerId ? new Types.ObjectId(reviewerId) : undefined,
+        reviewAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { new: true },
+    );
+  }
+
+  /** PAYROLL MANAGER – final approve/reject dispute */
   async updateDisputeStatus(
     disputeMongoId: string,
     dto: UpdateDisputeStatusDto,
+    managerId?: string,
   ) {
     return this.disputeModel.findByIdAndUpdate(
       disputeMongoId,
       {
         status: dto.status,
         resolutionComment: dto.resolutionComment,
+        finalBy: managerId ? new Types.ObjectId(managerId) : undefined,
+        finalAt: new Date(),
         updatedAt: new Date(),
       },
       { new: true },
     );
+  }
+
+  /** PAYROLL MANAGER – items awaiting final decision */
+  async getDisputesAwaitingFinal() {
+    return this.disputeModel
+      .find({
+        reviewStatus: {
+          $in: [
+            DisputeReviewStatus.RECOMMEND_APPROVE,
+            DisputeReviewStatus.RECOMMEND_REJECT,
+          ],
+        },
+        status: DisputeStatus.UNDER_REVIEW,
+      })
+      .exec();
   }
 
   /* ============================================================
