@@ -438,15 +438,6 @@ export default function TimeExceptionPage() {
                           </>
                         )}
                       </button>
-                      {canWrite && (
-                        <button
-                          onClick={() => setSelectedRequest(req)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-md hover:shadow-lg"
-                        >
-                          <FaEdit />
-                          Edit
-                        </button>
-                      )}
                     </div>
                   </div>
 

@@ -391,16 +391,12 @@ export class PerformanceService {
             throw new NotFoundException('Invalid employee profile ID');
         }
 
-        console.log('🔍 getEmployeeAppraisals called with:', employeeProfileId);
-        console.log('   Type:', typeof employeeProfileId);
 
         const results = await this.appraisalAssignmentModel
         .find({ employeeProfileId: new Types.ObjectId(employeeProfileId) })
         .lean()
         .sort({ assignedAt: -1 })
         .exec();
-
-        console.log('📊 Found assignments:', results.length);
 
         // Manually populate the references
         for (const assignment of results) {

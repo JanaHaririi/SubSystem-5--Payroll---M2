@@ -24,9 +24,6 @@ export default function PayrollTrackingHome() {
   const hasPayrollSpecialist = roles.some(
     (r: string) => r.toLowerCase() === "payroll specialist"
   );
-  const hasPayrollManager = roles.some(
-    (r: string) => r.toLowerCase() === "payroll manager"
-  );
 
   const cardClass =
     "bg-white shadow-md p-6 rounded-lg hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer border border-gray-200";
@@ -77,17 +74,17 @@ export default function PayrollTrackingHome() {
         </Link>
 
         {/* SPECIALIST PANEL */}
-        {(hasPayrollSpecialist || hasPayrollManager) && (
+        {hasPayrollSpecialist && (
           <Link href="/payroll-tracking/admin">
             <div className={cardClass}>
               <div className="flex items-center gap-3 mb-3">
                 <FiShield size={26} className="text-purple-700" />
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {hasPayrollManager ? "Manager / Specialist Panel" : "Specialist Panel"}
+                  Specialist Panel
                 </h2>
               </div>
               <p className="text-gray-800">
-                Review and approve claims and disputes. Refunds remain finance-only.
+                Review and approve claims, disputes, and refund operations.
               </p>
             </div>
           </Link>

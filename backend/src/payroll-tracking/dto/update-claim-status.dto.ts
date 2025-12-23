@@ -1,10 +1,9 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ClaimStatus } from '../enums/payroll-tracking-enum';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateClaimStatusDto {
-  @IsEnum(ClaimStatus)
+  @IsString()
   @IsNotEmpty()
-  status: ClaimStatus;   // final status set by payroll manager
+  status: string;   // e.g. APPROVED | REJECTED | UNDER_REVIEW
 
   @IsString()
   @IsOptional()

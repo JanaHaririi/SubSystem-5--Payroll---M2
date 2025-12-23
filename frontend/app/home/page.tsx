@@ -36,8 +36,9 @@ export default function HomePage() {
     userType === "candidate";
 
   const isHRAdmin =
-    userRoles.includes("candidate") ||
-    userType === "candidate";
+  roles.includes("hr admin") ||
+  roles.includes("system admin");
+
       const isManager =
     roles.includes("department head") ||
     roles.includes("department_head") ||
@@ -117,12 +118,27 @@ export default function HomePage() {
               />
             </Link>
 
-            {/* Leave Management */}
-            <DashboardCard
-              title="Leave Management"
-              description="Handle leave requests and balances"
-              icon="🏖️"
-            />
+           {/* Leave Management (single card for all roles) */}
+<Link
+  href={
+    isHRAdmin || isHR
+      ? "/dashboard/admin/leaves"
+      : isManager
+      ? "/dashboard/manager"
+      : "/dashboard/employee/leaves"
+  }
+>
+  <DashboardCard
+    title="Leave Management"
+    description={
+      isEmployee
+        ? "View and submit your leave requests"
+        : "Manage leave requests and balances"
+    }
+    icon="🏖️"
+  />
+</Link>
+
 
             <Link href={"/payroll"}>
                         {/* Payroll */}
@@ -150,30 +166,7 @@ export default function HomePage() {
                 icon="🏛️"
               />
             </Link>
-                      {/* NORMAL EMPLOYEE DASHBOARD */}
-          {!isHRAdmin && isEmployee && (
-              <Link href={"/dashboard/employee/leaves"}>
-              <DashboardCard
-                title="Leave Requests"
-                description="Submit and track your leave requests"
-                icon="✉️"
-              />
-              </Link>
-          )}
-
-          {/* MANAGER / DEPARTMENT HEAD DASHBOARD */}
-          {!isHRAdmin && !isEmployee && isManager && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link href={"/dashboard/manager"}>
-                            <DashboardCard
-                title="Team Leave Requests"
-                description="Review and approve your team’s leave requests"
-                icon="👥"
-                
-              />
-              </Link>
-            </div>
-          )}
+                    
 
           </div>
         </div>
@@ -433,4 +426,3 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-
